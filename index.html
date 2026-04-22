@@ -1,0 +1,1583 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grandia - Estado de Cuenta</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --grandia-navy: #1a233e;
+            --grandia-blue: #005696;
+            --grandia-light-blue: #e8f4f8;
+            --grandia-accent: #fbc02d;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7f9;
+            font-size: 12px;
+        }
+        .sidebar {
+            background-color: var(--grandia-navy);
+            width: 240px;
+            min-height: 100vh;
+        }
+        .header-top {
+            background-color: var(--grandia-blue);
+            color: white;
+            height: 50px;
+        }
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .btn-buscar {
+            background-color: #3b82f6;
+            color: white;
+            padding: 4px 15px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 600;
+        }
+        .table-header {
+            background-color: white;
+            border-bottom: 2px solid #ddd;
+            color: #444;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status-pagado { color: #2ecc71; font-weight: bold; }
+        .status-pendiente { color: #e74c3c; font-weight: bold; }
+        
+        /* Autocomplete styles */
+        .autocomplete-wrapper {
+            position: relative;
+        }
+        .autocomplete-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            background: white;
+            border: 1px solid #333;
+            z-index: 50;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .autocomplete-item {
+            padding: 4px 8px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+            font-size: 11px;
+        }
+        .autocomplete-item:hover {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            background-color: rgba(0,0,0,0.6);
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-container {
+            background: white;
+            width: 98%;
+            max-width: 1300px;
+            max-height: 95vh;
+            overflow-y: auto;
+            border-radius: 2px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .modal-header {
+            background-color: var(--grandia-blue);
+            color: white;
+            padding: 8px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .fieldset-custom {
+            border: 1px solid #ccc;
+            padding: 15px 10px 10px 10px;
+            margin-top: 15px;
+            position: relative;
+        }
+        .fieldset-legend {
+            position: absolute;
+            top: -9px;
+            left: 10px;
+            background: white;
+            padding: 0 5px;
+            font-size: 11px;
+            font-weight: bold;
+            color: #333;
+        }
+        .grid-header-gray {
+            background-color: #d1d5db;
+            font-size: 10px;
+            font-weight: bold;
+            color: #374151;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body class="flex">
+
+    <!-- Sidebar -->
+    <div class="sidebar text-white shrink-0">
+        <div class="p-4 bg-white flex justify-between items-center">
+            SABSA
+            <i class="fas fa-chevron-left text-gray-400 cursor-pointer"></i>
+        </div>
+        
+        <div class="p-4 flex items-center gap-3 border-b border-gray-700">
+            <div class="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center overflow-hidden">
+                <i class="fas fa-user text-2xl"></i>
+            </div>
+            <div>
+                <p class="text-xs font-bold">Ejecutivo</p>
+                <p class="text-[10px] text-gray-400 uppercase">Ejecutivo</p>
+            </div>
+            <i class="fas fa-cog ml-auto text-gray-400 text-xs"></i>
+        </div>
+
+        <nav class="mt-4">
+            <div class="px-4 py-3 flex items-center gap-3 hover:bg-gray-800 cursor-pointer">
+                <i class="fas fa-home text-sm"></i>
+                <span class="text-xs uppercase">Inicio</span>
+            </div>
+            <div class="px-4 py-3 flex items-center gap-3 bg-blue-600 cursor-pointer border-r-4 border-cyan-400">
+                <i class="fas fa-th-large text-sm"></i>
+                <span class="text-xs uppercase">Estado de Cuenta</span>
+                <i class="fas fa-chevron-right ml-auto text-[10px]"></i>
+            </div>
+            <div class="px-4 py-3 flex items-center gap-3 hover:bg-gray-800 cursor-pointer">
+                                <i class="fas fa-money-bill-wave text-sm"></i>
+                                <span class="text-xs uppercase">Cobranza</span>
+                                <i class="fas fa-chevron-right ml-auto text-[10px]"></i>
+                                <script>
+                                    // Navegación a cobranza.html
+                                    document.currentScript.parentElement.onclick = function() {
+                                        window.location.href = 'cobranza.html';
+                                    };
+                                </script>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <header class="header-top flex items-center justify-between px-6">
+            <div class="flex gap-4">
+                <i class="fas fa-arrow-left cursor-pointer"></i>
+                <i class="fas fa-redo cursor-pointer"></i>
+                <i class="fas fa-home cursor-pointer"></i>
+            </div>
+            <div class="flex items-center justify-center flex-1">
+                <span class="text-sm font-bold tracking-widest uppercase">Consulta de Estados de Cuenta</span>
+            </div>
+            <div class="flex items-center gap-6 text-[11px] font-semibold uppercase">
+                <div class="flex items-center gap-2 cursor-pointer"><span>Manual</span> <i class="fas fa-book-open"></i></div>
+                <div class="flex items-center gap-2 cursor-pointer"><span>Actividad</span> <i class="far fa-comment-dots text-lg"></i></div>
+                <div class="flex items-center gap-2 relative cursor-pointer">
+                    <span>Notificaciones</span>
+                    <i class="far fa-bell text-lg"></i>
+                    <span class="absolute -top-1 -right-2 bg-red-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[9px]">2</span>
+                </div>
+            </div>
+        </header>
+
+        <main id="app-container" class="p-6">
+            <!-- View 1: Search -->
+            <div id="view-search">
+                <div class="bg-blue-50 p-2 mb-4 border-l-4 border-blue-400">
+                    <h2 class="text-sm font-bold text-gray-700 uppercase">Estado de Cuenta</h2>
+                </div>
+
+                <div class="grid grid-cols-4 gap-6 mb-8">
+                    <div class="autocomplete-wrapper">
+                        <label class="block text-[11px] font-bold text-gray-600 mb-1 uppercase">Empresa</label>
+                        <div class="flex items-center border border-gray-300 bg-white px-2">
+                            <i class="fas fa-search text-gray-400 text-xs mr-2"></i>
+                            <input type="text" id="empresa-input" onfocus="showAutocomplete()" oninput="filterAutocomplete()" placeholder="Escriba el nombre" class="w-full py-1 text-xs outline-none uppercase" autocomplete="off">
+                        </div>
+                        <div id="autocomplete-list" class="autocomplete-list hidden">
+                            <div class="autocomplete-item" onclick="selectEmpresa('PUERTO ALCARRAZ SAC')">PUERTO ALCARRAZ SAC</div>
+                            <div class="autocomplete-item" onclick="selectEmpresa('ALCARRAZ EDIFICACIONES E.I.R.L.')">ALCARRAZ EDIFICACIONES E.I.R.L.</div>
+                            <div class="autocomplete-item" onclick="selectEmpresa('SERVICIOS ALCARRAZ')">SERVICIOS ALCARRAZ</div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-600 mb-1 uppercase">Producto</label>
+                        <select id="filter-producto" class="w-full border border-gray-300 bg-white py-1 text-xs outline-none px-2 uppercase h-[26px]">
+                            <option value="TODOS">Todos</option>
+                            <option value="EPS">EPS</option>
+                            <option value="SCTR">SCTR</option>
+                            <option value="FOLA">FOLA</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-600 mb-1 uppercase">Nro Contrato</label>
+                        <div class="flex items-center border border-gray-300 bg-white px-2">
+                            <i class="fas fa-search text-gray-400 text-xs mr-2"></i>
+                            <input type="text" placeholder="NRO CONTRATO" class="w-full py-1 text-xs outline-none">
+                        </div>
+                    </div>
+
+                    <div class="flex items-end gap-2">
+                        <div class="flex-1">
+                            <label class="block text-[11px] font-bold text-gray-600 mb-1 uppercase">Titular</label>
+                            <div class="flex items-center border border-gray-300 bg-white px-2">
+                                <i class="fas fa-search text-gray-400 text-xs mr-2"></i>
+                                <input type="text" placeholder="NOMBRE / DNI" class="w-full py-1 text-xs outline-none">
+                            </div>
+                        </div>
+                        <button onclick="handleSearch()" class="btn-buscar text-[11px] h-[26px]">
+                            <i class="fas fa-search"></i> BUSCAR
+                        </button>
+                    </div>
+                </div>
+
+                <div id="results-section" class="hidden">
+                    <h3 class="text-sm font-bold text-gray-700 mb-4 uppercase">Detalle Estado de Cuenta</h3>
+                    <div class="overflow-x-auto bg-white border border-gray-200">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="table-header">
+                                    <th class="p-2 border-r w-16">Item</th>
+                                    <th class="p-2 border-r">Número Contrato</th>
+                                    <th class="p-2 border-r">Producto</th>
+                                    <th class="p-2 border-r">Vigencia</th>
+                                    <th class="p-2 text-center w-32">Detalle</th>
+                                </tr>
+                            </thead>
+                            <tbody id="results-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- View 2: List of Installments (Cuotas) -->
+            <div id="view-detail" class="hidden">
+                <div class="flex justify-between items-center bg-blue-50 p-3 mb-4 text-[10px] font-bold text-gray-700 uppercase border-l-4 border-blue-400">
+                    <div class="flex gap-8" id="detail-header-info">
+                        <!-- Filled by JS -->
+                    </div>
+                    <button onclick="showView('search')" class="bg-gray-200 px-4 py-1 rounded text-[10px] uppercase font-bold text-gray-600 border border-gray-300">
+                        <i class="fas fa-chevron-left mr-1"></i> Volver
+                    </button>
+                </div>
+
+                <div class="mt-4">
+                    <div class="bg-white border border-gray-300 p-1 inline-block border-b-0 px-4 text-[10px] font-bold text-gray-600 uppercase">Cuotas</div>
+                    <div class="bg-white border border-gray-300 p-4">
+                        <div class="flex justify-end gap-2 mb-4">
+                            <button class="bg-green-600 text-white text-[10px] px-3 py-1 flex items-center gap-2 rounded font-bold uppercase"><i class="fas fa-file-excel"></i> Excel</button>
+                            <button class="bg-red-700 text-white text-[10px] px-3 py-1 flex items-center gap-2 rounded font-bold uppercase"><i class="fas fa-file-pdf"></i> PDF</button>
+                            <button class="bg-orange-500 text-white text-[10px] px-3 py-1 flex items-center gap-2 rounded font-bold uppercase"><i class="fas fa-print"></i> Imprimir</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-[10px] text-left border-collapse border border-gray-300">
+                                <thead class="bg-gray-100 font-bold uppercase text-gray-600">
+                                    <tr>
+                                        <th class="p-2 border border-gray-300">NRO</th>
+                                        <th class="p-2 border border-gray-300">CUOTA</th>
+                                        <th class="p-2 border border-gray-300">FECHA EMISION CUOTA</th>
+                                        <th class="p-2 border border-gray-300">F.VCTO CUOTA</th>
+                                        <th class="p-2 border border-gray-300">ESTADO</th>
+                                        <th class="p-2 border border-gray-300">LIQUIDACION</th>
+                                        <th class="p-2 border border-gray-300">FECHA EMISION(COMPROBANTE)</th>
+                                        <th class="p-2 border border-gray-300">FECHA PAGO</th>
+                                        <th class="p-2 border border-gray-300">FORMA PAGO</th>
+                                        <th class="p-2 border border-gray-300">COMPROBANTE</th>
+                                        <th class="p-2 border border-gray-300 text-right">MONTO</th>
+                                        <th class="p-2 border border-gray-300 text-center">DETALLE</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cuotas-table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="mt-auto py-2 bg-gray-100 text-center border-t border-gray-200">
+            <p class="text-[10px] font-bold text-gray-500 uppercase">Sabsa Copyright Derechos Reservados 2023</p>
+        </footer>
+    </div>
+    <!-- Modal: Información del Contrato / Afiliados -->
+    <div id="modal-afiliados" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <span id="modal-title" class="uppercase">NUMERO CONTRATO : 1000005</span>
+                <button onclick="closeModal()" class="text-white hover:text-gray-200 text-xl font-bold">&times;</button>
+            </div>
+            
+            <div class="p-4">
+                <!-- Banner Info -->
+                <div class="text-[10px] font-bold text-gray-700 mb-4 bg-blue-50 p-2 flex justify-between uppercase border-b border-blue-200">
+                    <div id="modal-header-banner" class="flex gap-6">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+
+                <div id="modal-cuota-info" class="text-[10px] font-bold flex gap-10 mb-3 px-2">
+                        <!-- Example: CUOTA: 1  FECHA DE EMISION: 01/03/2026 ... -->
+                    </div>
+
+                <!-- Tabs Afiliados / Cuotas -->
+                <div class="mb-2">
+                    <div id="eecc-grupo-familiar" class="flex border-b border-gray-300">
+                        <button id="tab-afiliados" onclick="selectTab('afiliados')" class="px-4 py-2 -mb-px font-bold text-blue-700 border-b-2 border-blue-700 bg-white focus:outline-none">AFILIADOS</button>
+                        <button id="tab-cuotas" onclick="selectTab('cuotas')" class="px-4 py-2 font-bold text-gray-500 border-b-2 border-transparent bg-white focus:outline-none">CUOTAS</button>
+                    </div>
+                    <div id="tab-content-afiliados" class="pt-4">
+                        <!-- Aquí va el contenido de Afiliados -->
+                         <div class="fieldset-custom">
+                    <span class="fieldset-legend">COMPOSICIÓN</span>
+                    <div class="flex justify-between items-center mb-3">
+                        <div class="flex gap-2 items-center">
+                            
+                            <div class="relative">
+                                <!--<i class="fas fa-search absolute left-2 top-1.5 text-gray-400 text-[10px]"></i>-->
+                                <input type="search" id="modal-search-input" oninput="filterModalAfiliados()" placeholder="NOMBRE AFILIADO/DNI/CODIGO TITULAR" class="border border-gray-400 pl-6 pr-2 py-1 text-[10px] uppercase w-64 outline-none">
+                            </div>
+                            <br>
+                            
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="bg-green-600 text-white px-3 py-1 rounded text-[10px] font-bold uppercase flex items-center gap-1"><i class="fas fa-file-excel"></i> Excel</button>
+                            <button class="bg-red-700 text-white px-3 py-1 rounded text-[10px] font-bold uppercase flex items-center gap-1"><i class="fas fa-file-pdf"></i> PDF</button>
+                            <button class="bg-orange-500 text-white px-3 py-1 rounded text-[10px] font-bold uppercase flex items-center gap-1"><i class="fas fa-print"></i> Imprimir</button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto border border-gray-300">
+                        <table class="w-full text-[10px] text-left border-collapse">
+                            <thead>
+                                <tr class="grid-header-gray">
+                                    <th class="p-1.5 border-r border-gray-400">CODIGO TITULAR</th>
+                                    <th class="p-1.5 border-r border-gray-400">TITULAR</th>
+                                    <th class="p-1.5 border-r border-gray-400">CODIGO AFILIADO</th>
+                                    <th class="p-1.5 border-r border-gray-400">GRUPO EDAD</th>
+                                    <th class="p-1.5 border-r border-gray-400">PLAN</th>
+                                    <th class="p-1.5 border-r border-gray-400">DNI</th>
+                                    <th class="p-1.5 border-r border-gray-400">AFILIADO</th>
+                                    <th class="p-1.5 border-r border-gray-400">PARENTESCO</th>
+                                    <th class="p-1.5 border-r border-gray-400 text-center">EDAD</th>
+                                    <th class="p-1.5 border-r border-gray-400">FECHA DE AFILIACION</th>
+                                    <th class="p-1.5 border-r border-gray-400 text-right">PRIMA</th>
+                                    <th class="p-1.5 text-center">ESTADO</th>
+                                </tr>
+                            </thead>
+                            <tbody id="modal-table-body"></tbody>
+                            <tfoot class="bg-gray-50 font-bold border-t-2 border-gray-300">
+                                <tr>
+                                    <td colspan="10" class="p-1.5 text-right uppercase">TOTAL:</td>
+                                    <td class="p-1.5 text-right" id="modal-total-value">1,276.17</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Fieldset Movimientos -->
+                <div class="fieldset-custom">
+                    <span class="fieldset-legend">MOVIMIENTOS</span>
+                    <div class="flex gap-2 mb-2">
+                        <button class="bg-green-600 text-white px-3 py-1 rounded text-[10px] font-bold uppercase flex items-center gap-1"><i class="fas fa-file-excel"></i> Excel</button>
+                        <button class="bg-red-700 text-white px-3 py-1 rounded text-[10px] font-bold uppercase flex items-center gap-1"><i class="fas fa-file-pdf"></i> PDF</button>
+                        <button class="bg-orange-500 text-white px-3 py-1 rounded text-[10px] font-bold uppercase flex items-center gap-1"><i class="fas fa-print"></i> Imprimir</button>
+                    </div>
+                    <div class="overflow-x-auto border border-gray-300">
+                        <table class="w-full text-[10px] text-left border-collapse">
+                            <thead>
+                                <tr class="grid-header-gray">
+                                    <th class="p-1.5 border-r border-gray-400" colspan="3">DETALLE</th>
+                                    <th class="p-1.5 border-r border-gray-400" rowspan="2">INI.VIGENCIA</th>
+                                    <th class="p-1.5 border-r border-gray-400" rowspan="2">PLAN</th>
+                                    <th class="p-1.5 border-r border-gray-400" rowspan="2">FECHA</th>
+                                    <th class="p-1.5 border-r border-gray-400" rowspan="2">PARENTESCO</th>
+                                    <th class="p-1.5 border-r border-gray-400" colspan="3">AFILIADO</th>
+                                </tr>
+                                <tr class="grid-header-gray">
+                                    <th class="p-1.5 border-r border-gray-400">CODIGO</th>
+                                    <th class="p-1.5 border-r border-gray-400">TIPO</th>
+                                    <th class="p-1.5 border-r border-gray-400">MOTIVO</th>
+                                    <th class="p-1.5 border-r border-gray-400">CODIGO AFILIADO</th>
+                                    <th class="p-1.5 border-r border-gray-400">APELLIDOS Y NOMBRE</th>
+                                    <th class="p-1.5">FECHA DEL REGISTRO</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b border-gray-300 bg-white">
+                                    <td class="p-1.5 border-r border-gray-300">6201015900</td>
+                                    <td class="p-1.5 border-r border-gray-300 uppercase">BAJA</td>
+                                    <td class="p-1.5 border-r border-gray-300 uppercase">SOLICITUD VOLUNTARIA</td>
+                                    <td class="p-1.5 border-r border-gray-300"></td>
+                                    <td class="p-1.5 border-r border-gray-300 uppercase">PLAN BASE</td>
+                                    <td class="p-1.5 border-r border-gray-300">28/02/2026</td>
+                                    <td class="p-1.5 border-r border-gray-300 uppercase">PADRE</td>
+                                    <td class="p-1.5 border-r border-gray-300"></td>
+                                    <td class="p-1.5 border-r border-gray-300 uppercase">JOSE CARPIO PEREZ</td>
+                                    <td class="p-1.5">01/01/2026</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                    </div>
+                    <div id="tab-content-cuotas" class="pt-4 hidden">
+                        <table class="w-full text-[10px] text-left border-collapse border border-gray-300">
+                                <thead class="bg-gray-100 font-bold uppercase text-gray-600">
+                                    <tr>
+                                        <th class="p-2 border border-gray-300">NRO</th>
+                                        <th class="p-2 border border-gray-300">CUOTA</th>
+                                        <th class="p-2 border border-gray-300">FECHA EMISION CUOTA</th>
+                                        <th class="p-2 border border-gray-300">F.VCTO CUOTA</th>
+                                        <th class="p-2 border border-gray-300">ESTADO</th>
+                                        <th class="p-2 border border-gray-300">LIQUIDACION</th>
+                                        <th class="p-2 border border-gray-300">FECHA EMISION(COMPROBANTE)</th>
+                                        <th class="p-2 border border-gray-300">FECHA PAGO</th>
+                                        <th class="p-2 border border-gray-300">FORMA PAGO</th>
+                                        <th class="p-2 border border-gray-300">COMPROBANTE</th>
+                                        <th class="p-2 border border-gray-300 text-right">MONTO</th>
+                                        <th class="p-2 border border-gray-300 text-center">DETALLE</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b border-gray-300 bg-white">
+                                        <td class="p-2 border border-gray-300">1</td>
+                                        <td class="p-2 border border-gray-300">Marzo 2026</td>
+                                        <td class="p-2 border border-gray-300">01-03-2026</td>
+                                        <td class="p-2 border border-gray-300">31-03-2026</td>
+                                        <td class="p-2 border border-gray-300"><span class="status-pagado">PAGADO</span></td>
+                                        <td class="p-2 border border-gray-300">00011-2026</td>
+                                        <td class="p-2 border border-gray-300">01/03/2026</td>
+                                        <td class="p-2 border border-gray-300">31/03/2026</td>
+                                        <td class="p-2 border border-gray-300"><i class='far fa-file-alt text-lg text-gray-600'></i></td>
+                                        <td class="p-2 border border-gray-300">FF001-00002525</td>
+                                        <td class="p-2 border border-gray-300 text-right">364.62</td>
+                                        <td class="p-2 border border-gray-300 text-center"><button class="bg-blue-600 text-white px-2 py-1 rounded text-[10px] font-bold uppercase" onclick="detalleAfilidos('PLAN BASE')">Ver</button></td>
+                                    </tr>
+                                    <tr class="border-b border-gray-300 bg-white">
+                                        <td class="p-2 border border-gray-300">1</td>
+                                        <td class="p-2 border border-gray-300">Marzo 2026</td>
+                                        <td class="p-2 border border-gray-300">01-03-2026</td>
+                                        <td class="p-2 border border-gray-300">31-03-2026</td>
+                                        <td class="p-2 border border-gray-300"><span class="status-pagado">PAGADO</span></td>
+                                        <td class="p-2 border border-gray-300">00011-2026</td>
+                                        <td class="p-2 border border-gray-300">01/03/2026</td>
+                                        <td class="p-2 border border-gray-300">31/03/2026</td>
+                                        <td class="p-2 border border-gray-300"><i class='far fa-file-alt text-lg text-gray-600'></i></td>
+                                        <td class="p-2 border border-gray-300">FF001-00002525</td>
+                                        <td class="p-2 border border-gray-300 text-right">182.31</td>
+                                        <td class="p-2 border border-gray-300 text-center"><button class="bg-blue-600 text-white px-2 py-1 rounded text-[10px] font-bold uppercase" onclick="detalleAfilidos('ADICIONAL 1')">Ver</button></td>
+                                    </tr>
+                                    <tr class="border-b border-gray-300 bg-white">
+                                        <td class="p-2 border border-gray-300">2</td>
+                                        <td class="p-2 border border-gray-300">Abril 2026</td>
+                                        <td class="p-2 border border-gray-300">01-04-2026</td>
+                                        <td class="p-2 border border-gray-300">30-04-2026</td>
+                                        <td class="p-2 border border-gray-300"><span class="status-pendiente">PENDIENTE</span></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300 text-right">1276.17</td>
+                                        <td class="p-2 border border-gray-300 text-center"><button class="bg-blue-600 text-white px-2 py-1 rounded text-[10px] font-bold uppercase" onclick="detalleAfilidos('PLAN BASE')">Ver</button></td>
+                                    </tr>
+                                    <tr class="border-b border-gray-300 bg-white">
+                                        <td class="p-2 border border-gray-300">3</td>
+                                        <td class="p-2 border border-gray-300">Mayo 2026</td>
+                                        <td class="p-2 border border-gray-300">01-05-2026</td>
+                                        <td class="p-2 border border-gray-300">30-05-2026</td>
+                                        <td class="p-2 border border-gray-300"><span class="status-pendiente">PENDIENTE</span></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300 text-right">1276.17</td>
+                                        <td class="p-2 border border-gray-300 text-center"><button class="bg-blue-600 text-white px-2 py-1 rounded text-[10px] font-bold uppercase" onclick="detalleAfilidos('PLAN BASE')">Ver</button></td>
+                                    </tr>
+                                    <tr class="border-b border-gray-300 bg-white">
+                                        <td class="p-2 border border-gray-300">4</td>
+                                        <td class="p-2 border border-gray-300">Junio 2026</td>
+                                        <td class="p-2 border border-gray-300">01-06-2026</td>
+                                        <td class="p-2 border border-gray-300">30-06-2026</td>
+                                        <td class="p-2 border border-gray-300"><span class="status-pendiente">PENDIENTE</span></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300 text-right">1276.17</td>
+                                        <td class="p-2 border border-gray-300 text-center"><button class="bg-blue-600 text-white px-2 py-1 rounded text-[10px] font-bold uppercase" onclick="detalleAfilidos('PLAN BASE')">Ver</button></td>
+                                    </tr>   
+                                    <tr class="border-b border-gray-300 bg-white">
+                                        <td class="p-2 border border-gray-300">5</td>
+                                        <td class="p-2 border border-gray-300">Julio 2026</td>
+                                        <td class="p-2 border border-gray-300">01-07-2026</td>
+                                        <td class="p-2 border border-gray-300">30-07-2026</td>
+                                        <td class="p-2 border border-gray-300"><span class="status-pendiente">PENDIENTE</span></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300 text-right">1276.17</td>
+                                        <td class="p-2 border border-gray-300 text-center"><button class="bg-blue-600 text-white px-2 py-1 rounded text-[10px] font-bold uppercase" onclick="detalleAfilidos('PLAN BASE')">Ver</button></td>
+                                    </tr>
+                                    <tr class="border-b border-gray-300 bg-white">
+                                        <td class="p-2 border border-gray-300">6</td>
+                                        <td class="p-2 border border-gray-300">Agosto 2026</td>
+                                        <td class="p-2 border border-gray-300">01-08-2026</td>
+                                        <td class="p-2 border border-gray-300">30-08-2026</td>
+                                        <td class="p-2 border border-gray-300"><span class="status-pendiente">PENDIENTE</span></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300 text-right">1276.17</td>
+                                        <td class="p-2 border border-gray-300 text-center"><button class="bg-blue-600 text-white px-2 py-1 rounded text-[10px] font-bold uppercase" onclick="detalleAfilidos('PLAN BASE')">Ver</button></td>
+                                    </tr>
+                                    <tr class="border-b border-gray-300 bg-white">
+                                        <td class="p-2 border border-gray-300">7</td>
+                                        <td class="p-2 border border-gray-300">Setiembre 2026</td>
+                                        <td class="p-2 border border-gray-300">01-09-2026</td>
+                                        <td class="p-2 border border-gray-300">30-09-2026</td>
+                                        <td class="p-2 border border-gray-300"><span class="status-pendiente">PENDIENTE</span></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300 text-right">1276.17</td>
+                                        <td class="p-2 border border-gray-300 text-center"><button class="bg-blue-600 text-white px-2 py-1 rounded text-[10px] font-bold uppercase" onclick="detalleAfilidos('PLAN BASE')">Ver</button></td>
+                                    </tr>
+
+                                    <tr class="border-b border-gray-300 bg-white">
+                                        <td class="p-2 border border-gray-300">8</td>
+                                        <td class="p-2 border border-gray-300">Octubre 2026</td>
+                                        <td class="p-2 border border-gray-300">01-10-2026</td>
+                                        <td class="p-2 border border-gray-300">30-10-2026</td>
+                                        <td class="p-2 border border-gray-300"><span class="status-pendiente">PENDIENTE</span></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300 text-right">1276.17</td>
+                                        <td class="p-2 border border-gray-300 text-center"><button class="bg-blue-600 text-white px-2 py-1 rounded text-[10px] font-bold uppercase" onclick="detalleAfilidos('PLAN BASE')">Ver</button></td>
+                                    </tr>
+                                    <tr class="border-b border-gray-300 bg-white">
+                                        <td class="p-2 border border-gray-300">9</td>
+                                        <td class="p-2 border border-gray-300">Noviembre 2026</td>
+                                        <td class="p-2 border border-gray-300">01-11-2026</td>
+                                        <td class="p-2 border border-gray-300">30-11-2026</td>
+                                        <td class="p-2 border border-gray-300"><span class="status-pendiente">PENDIENTE</span></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300 text-right">1276.17</td>
+                                        <td class="p-2 border border-gray-300 text-center"><button class="bg-blue-600 text-white px-2 py-1 rounded text-[10px] font-bold uppercase" onclick="detalleAfilidos('PLAN BASE')">Ver</button></td>
+                                    </tr>
+                                    <tr class="border-b border-gray-300 bg-white">
+                                        <td class="p-2 border border-gray-300">10</td>
+                                        <td class="p-2 border border-gray-300">Diciembre 2026</td>
+                                        <td class="p-2 border border-gray-300">01-12-2026</td>
+                                        <td class="p-2 border border-gray-300">30-12-2026</td>
+                                        <td class="p-2 border border-gray-300"><span class="status-pendiente">PENDIENTE</span></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300 text-right">1276.17</td>
+                                        <td class="p-2 border border-gray-300 text-center"><button class="bg-blue-600 text-white px-2 py-1 rounded text-[10px] font-bold uppercase" onclick="detalleAfilidos('PLAN BASE')">Ver</button></td>
+                                    </tr>
+                                    <tr class="border-b border-gray-300 bg-white">
+                                        <td class="p-2 border border-gray-300">11</td>
+                                        <td class="p-2 border border-gray-300">Enero 2027</td>
+                                        <td class="p-2 border border-gray-300">01-01-2027</td>
+                                        <td class="p-2 border border-gray-300">30-01-2027</td>
+                                        <td class="p-2 border border-gray-300"><span class="status-pendiente">PENDIENTE</span></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300 text-right">1276.17</td>
+                                        <td class="p-2 border border-gray-300 text-center"><button class="bg-blue-600 text-white px-2 py-1 rounded text-[10px] font-bold uppercase" onclick="detalleAfilidos('PLAN BASE')">Ver</button></td>
+                                    </tr>
+                                    <tr class="border-b border-gray-300 bg-white">
+                                        <td class="p-2 border border-gray-300">12</td>
+                                        <td class="p-2 border border-gray-300">Febrero 2027</td>
+                                        <td class="p-2 border border-gray-300">01-02-2027</td>
+                                        <td class="p-2 border border-gray-300">28-02-2027</td>
+                                        <td class="p-2 border border-gray-300"><span class="status-pendiente">PENDIENTE</span></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300"></td>
+                                        <td class="p-2 border border-gray-300 text-right">1276.17</td>
+                                        <td class="p-2 border border-gray-300 text-center"><button class="bg-blue-600 text-white px-2 py-1 rounded text-[10px] font-bold uppercase" onclick="detalleAfilidos('PLAN BASE')">Ver</button></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                    </div>
+                </div>
+                <script>
+                function selectTab(tab) {
+                    document.getElementById('tab-afiliados').classList.remove('text-blue-700', 'border-blue-700');
+                    document.getElementById('tab-afiliados').classList.add('text-gray-500', 'border-transparent');
+                    document.getElementById('tab-cuotas').classList.remove('text-blue-700', 'border-blue-700');
+                    document.getElementById('tab-cuotas').classList.add('text-gray-500', 'border-transparent');
+                    document.getElementById('tab-content-afiliados').classList.add('hidden');
+                    document.getElementById('tab-content-cuotas').classList.add('hidden');
+                    if(tab === 'afiliados') {
+                        document.getElementById('tab-afiliados').classList.add('text-blue-700', 'border-blue-700');
+                        document.getElementById('tab-afiliados').classList.remove('text-gray-500', 'border-transparent');
+                        document.getElementById('tab-content-afiliados').classList.remove('hidden');
+                    } else {
+                        document.getElementById('tab-cuotas').classList.add('text-blue-700', 'border-blue-700');
+                        document.getElementById('tab-cuotas').classList.remove('text-gray-500', 'border-transparent');
+                        document.getElementById('tab-content-cuotas').classList.remove('hidden');
+                    }
+                }
+                </script>
+                
+                
+                <div class="mt-6 flex justify-center">
+                    <button onclick="closeModal()" class="bg-red-700 text-white font-bold uppercase px-24 py-2 rounded-sm text-xs shadow-md hover:bg-red-800">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data Global
+        const contratosData = [
+            { item: 1, contrato: "1000005", producto: "EPS", vigencia: "01/03/2025 - 28/02/2026", empresa: "ALCARRAZ EDIFICACIONES E.I.R.L." },
+            { item: 2, contrato: "1000006", producto: "SCTR", vigencia: "01/09/2025 - 31/08/2026", empresa: "ALCARRAZ EDIFICACIONES E.I.R.L." },
+            { item: 3, contrato: "1000007", producto: "FOLA", vigencia: "01/05/2025 - 30/04/2026", empresa: "ALCARRAZ EDIFICACIONES E.I.R.L." },
+            { item: 4, contrato: "1000008", producto: "EPS", vigencia: "01/09/2025 - 31/08/2026", empresa: "ALCARRAZ EDIFICACIONES E.I.R.L." }
+        ];
+
+        const cuotasData = [
+            { nro: 1, cuota: "Marzo 2026", emision: "01-03-2026", vcto: "31-03-2026", estado: "PAGADO", liquidacion: "00011-2026", fact: "01/03/2026", pago: "31/03/2026",forma_pago: "<i class='far fa-file-alt text-lg text-gray-600'></i>", comprobante: "FF001-00002525", monto: 1093.86,plan: "PLAN BASE" },
+            { nro: "1", cuota: "Marzo 2026", emision: "01-03-2026", vcto: "31-03-2026", estado: "PAGADO", liquidacion: "00012-2026", fact: "01/03/2026", pago: "31/03/2026", forma_pago: "<i class='far fa-file-alt text-lg text-gray-600'></i>", comprobante: "FF001-00002526", monto: 182.31, plan: "ADICIONAL 1" },
+            { nro: 2, cuota: "Abril 2026", emision: "01-04-2026", vcto: "30-04-2026", estado: "PENDIENTE", liquidacion: "", fact: "", pago: "", forma_pago: "",comprobante: "", monto: 1276.17, plan: "PLAN BASE" },
+            { nro: 3, cuota: "Mayo 2026", emision: "01-05-2026", vcto: "31-05-2026", estado: "PENDIENTE", liquidacion: "", fact: "", pago: "", forma_pago: "",comprobante: "", monto: 1276.17, plan: "PLAN BASE" },
+            { nro: 4, cuota: "Junio 2026", emision: "01-06-2026", vcto: "30-06-2026", estado: "PENDIENTE", liquidacion: "", fact: "", pago: "", forma_pago: "",comprobante: "", monto: 1276.17, plan: "PLAN BASE" },
+            { nro: 5, cuota: "Julio 2026", emision: "01-07-2026", vcto: "31-07-2026", estado: "PENDIENTE", liquidacion: "", fact: "", pago: "", forma_pago: "",comprobante: "", monto: 1276.17, plan: "PLAN BASE" },
+            { nro: 6, cuota: "Agosto 2026", emision: "01-08-2026", vcto: "30-08-2026", estado: "PENDIENTE", liquidacion: "", fact: "", pago: "", forma_pago: "",comprobante: "", monto: 1276.17, plan: "PLAN BASE" },
+            { nro: 7, cuota: "Setiembre 2026", emision: "01-09-2026", vcto: "30-09-2026", estado: "PENDIENTE", liquidacion: "", fact: "", pago: "", forma_pago: "",comprobante: "", monto: 1276.17, plan: "PLAN BASE"},
+            { nro: 8, cuota: "Octubre 2026", emision: "01-10-2026", vcto: "31-10-2026", estado: "PENDIENTE", liquidacion: "", fact: "", pago: "", forma_pago: "",comprobante: "", monto: 1276.17, plan: "PLAN BASE" },
+            { nro: 9, cuota: "Noviembre 2026", emision: "01-11-2026", vcto: "30-11-2026", estado: "PENDIENTE", liquidacion: "", fact: "", pago: "", forma_pago: "",comprobante: "", monto: 1276.17, plan: "PLAN BASE" },
+            { nro: 10, cuota: "Diciembre 2026", emision: "01-12-2026", vcto: "31-12-2026", estado: "PENDIENTE", liquidacion: "", fact: "", pago: "", forma_pago: "",comprobante: "", monto: 1276.17, plan: "PLAN BASE" },
+            { nro: 11, cuota: "Enero 2027", emision: "01-01-2027", vcto: "31-01-2027", estado: "PENDIENTE", liquidacion: "", fact: "", pago: "", forma_pago: "",comprobante: "", monto: 1276.17, plan: "PLAN BASE" },
+            { nro: 12, cuota: "Febrero 2027", emision: "01-02-2027", vcto: "28-02-2027", estado: "PENDIENTE", liquidacion: "", fact: "", pago: "", forma_pago: "",comprobante: "", monto: 1276.17, plan: "PLAN BASE" }
+
+        ];
+
+        const afiliadosData = [
+            
+            // Afiliados para contrato 1000005
+            { contra:"1000005",codTit: "0910600", titular: "FERNANDO JESUS CARPIO GERBI", codAf: "6200869100", gEdad: "T1", plan: "PLAN BASE", dni: "09751053", afiliado: "FERNANDO JESUS CARPIO GERBI", parentesco: "TITULAR", edad: 52, fAf: "01/03/2026", prima: 364.62, est: "ACTIVO" },
+            { contra:"1000005",codTit: "0910600", titular: "FERNANDO JESUS CARPIO GERBI", codAf: "6200869104", gEdad: "", plan: "PLAN BASE", dni: "41493403", afiliado: "SARA PATRICIA VELARDE PEÑA", parentesco: "CONYUGE", edad: 51, fAf: "01/03/2026", prima: 0.00, est: "ACTIVO" },
+            { contra:"1000005",codTit: "0910601", titular: "MAURICIO BALBI BUSTAMANTE", codAf: "6201005800", gEdad: "T0", plan: "PLAN BASE", dni: "42187524", afiliado: "MAURICIO BALBI BUSTAMANTE", parentesco: "TITULAR", edad: 39, fAf: "01/03/2026", prima: 182.31, est: "ACTIVO" },
+            { contra:"1000005",codTit: "0910602", titular: "PABLO MARCELO ESCOBAR GARCIA", codAf: "6201013300", gEdad: "T0", plan: "PLAN BASE", dni: "09540029", afiliado: "PABLO MARCELO ESCOBAR GARCIA", parentesco: "TITULAR", edad: 51, fAf: "01/03/2026", prima: 182.31, est: "ACTIVO" },
+            { contra:"1000005",codTit: "0910603", titular: "MARCO ANTONIO ROCA ZEGARRA", codAf: "6201505900", gEdad: "T1", plan: "PLAN BASE", dni: "09889450", afiliado: "MARCO ANTONIO ROCA ZEGARRA", parentesco: "TITULAR", edad: 50, fAf: "01/03/2026", prima: 364.62, est: "ACTIVO" },
+            { contra:"1000005",codTit: "0910603", titular: "MARCO ANTONIO ROCA ZEGARRA", codAf: "6201505500", gEdad: "", plan: "PLAN BASE", dni: "25754045", afiliado: "RAQUEL GLORIA GRANDEZ LOPEZ", parentesco: "CONYUGE", edad: 50, fAf: "01/03/2026", prima: 0.00, est: "ACTIVO" },
+            { contra:"1000005",codTit: "0910604", titular: "ANA LUCIA LA TORRE SANDOVAL", codAf: "6201502100", gEdad: "T1", plan: "PLAN BASE", dni: "99754045", afiliado: "ANA LUCIA LA TORRE SANDOVAL", parentesco: "TITULAR", edad: 50, fAf: "01/04/2026", prima: 182.31, est: "ACTIVO" },
+            // Afiliados para contrato 1000006
+            { contra:"1000006",codTit: "0910605", titular: "MARIO LOPEZ CHAVEZ", codAf: "6202001089", gEdad: "T0", plan: "PLAN BASE", dni: "12325689", afiliado: "MARIO LOPEZ CHAVEZ", parentesco: "TITULAR", edad: 45, fAf: "01/09/2025", prima: 182.31, est: "ACTIVO" },
+            { contra:"1000006",codTit: "0910606", titular: "MARIA ALVARES TERRONES", codAf: "6202001090", gEdad: "T0", plan: "PLAN BASE", dni: "89562356", afiliado: "MARIA ALVARES TERRONES", parentesco: "TITULAR", edad: 43, fAf: "01/09/2025", prima: 182.31, est: "ACTIVO" },
+            // Afiliados para contrato 1000007
+            { contra:"1000007",codTit: "0910607", titular: "ANDREU MEDINA CORNEJO", codAf: "6203001001", gEdad: "T0", plan: "PLAN BASE", dni: "66666666", afiliado: "CARLOS RAMIREZ DIAZ", parentesco: "TITULAR", edad: 38, fAf: "01/05/2025", prima: 180.00, est: "ACTIVO" },
+            { contra:"1000007",codTit: "0910607", titular: "ANDREU MEDINA CORNEJO", codAf: "6203001002", gEdad: "", plan: "PLAN BASE", dni: "98564578", afiliado: "ANA TORRES MORA", parentesco: "CONYUGE", edad: 36, fAf: "01/05/2025", prima: 0.00, est: "ACTIVO" },
+            // Afiliados para contrato 1000008
+            { contra:"1000008",codTit: "0910609", titular: "LUISA FERNANDEZ SOTO", codAf: "6204001001", gEdad: "T1", plan: "PLAN BASE", dni: "44444444", afiliado: "LUISA FERNANDEZ SOTO", parentesco: "TITULAR", edad: 50, fAf: "01/09/2025", prima: 250.00, est: "ACTIVO" },
+            { contra:"1000008",codTit: "0910611", titular: "LUISA FERNANDEZ SOTO", codAf: "6204001002", gEdad: "", plan: "PLAN BASE", dni: "45127896", afiliado: "CARLOS MORALES VERA", parentesco: "CONYUGE", edad: 48, fAf: "01/09/2025", prima: 0.00, est: "ACTIVO" }
+        ];
+
+        const adicionalData = [
+            
+            // Adicionales para contrato 1000005
+            { contra:"1000005",codTit: "0910600", titular: "FERNANDO JESUS CARPIO GERBI", codAf: "6202194700", gEdad: "A1", plan: "ADICIONAL 1", dni: "61015022", afiliado: "GISELE FRANCOISE CARPIO VELARDE", parentesco: "TITULAR", edad: 42, fAf: "01/03/2026", prima: 182.31, est: "ACTIVO" },
+
+        ];
+
+        const detalleGrupoFamiliar = [
+            
+            // Afiliados para contrato 1000005
+            { contra:"1000005",codTit: "0910600", titular: "FERNANDO JESUS CARPIO GERBI", codAf: "6200869100", gEdad: "T1", plan: "PLAN BASE", dni: "09751053", afiliado: "FERNANDO JESUS CARPIO GERBI", parentesco: "TITULAR", edad: 52, fAf: "01/03/2026", prima: 364.62, est: "ACTIVO" },
+            { contra:"1000005",codTit: "0910600", titular: "FERNANDO JESUS CARPIO GERBI", codAf: "6200869104", gEdad: "", plan: "PLAN BASE", dni: "41493403", afiliado: "SARA PATRICIA VELARDE PEÑA", parentesco: "CONYUGE", edad: 51, fAf: "01/03/2026", prima: 0.00, est: "ACTIVO" }
+        ];
+        const adicionalGrupoFamiliar = [
+            
+            // Adicionales para contrato 1000005
+            { contra:"1000005",codTit: "0910600", titular: "FERNANDO JESUS CARPIO GERBI", codAf: "6202194700", gEdad: "A1", plan: "ADICIONAL 1", dni: "61015022", afiliado: "GISELE FRANCOISE CARPIO VELARDE", parentesco: "TITULAR", edad: 42, fAf: "01/03/2026", prima: 182.31, est: "ACTIVO" },
+
+        ];
+
+
+
+        let currentContract = null;
+
+        // --- Autocomplete Logic ---
+        function showAutocomplete() {
+            document.getElementById('autocomplete-list').classList.remove('hidden');
+        }
+
+        function filterAutocomplete() {
+            const input = document.getElementById('empresa-input').value.toUpperCase();
+            const items = document.querySelectorAll('.autocomplete-item');
+            items.forEach(item => {
+                if (item.innerText.toUpperCase().includes(input)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
+        function selectEmpresa(val) {
+            document.getElementById('empresa-input').value = val;
+            document.getElementById('autocomplete-list').classList.add('hidden');
+        }
+
+        // --- Views Logic ---
+        function showView(view) {
+            document.getElementById('view-search').classList.add('hidden');
+            document.getElementById('view-detail').classList.add('hidden');
+            if (view === 'search') document.getElementById('view-search').classList.remove('hidden');
+            if (view === 'detail') document.getElementById('view-detail').classList.remove('hidden');
+        }
+
+        function handleSearch() {
+            const tbody = document.getElementById('results-table-body');
+            const productoSeleccionado = document.getElementById('filter-producto').value;
+            const contratoInput = document.querySelector('input[placeholder="NRO CONTRATO"]').value.trim();
+            const afiliadoInput = document.querySelector('input[placeholder="NOMBRE / DNI"]').value.trim().toLowerCase();
+            let resultados = contratosData;
+
+            // Filtro por producto
+            if (productoSeleccionado && productoSeleccionado !== 'TODOS') {
+                resultados = resultados.filter(item => item.producto === productoSeleccionado);
+            }
+            // Filtro por número de contrato
+            if (contratoInput) {
+                resultados = resultados.filter(item => item.contrato.includes(contratoInput));
+            }
+
+            // Filtro por afiliado o DNI
+            if (afiliadoInput) {
+                // Buscar contratos que tengan al menos un afiliado que coincida
+                const contratosConAfiliado = new Set();
+                let afiliadosEncontrados = [];
+                afiliadosData.forEach(a => {
+                    if (
+                        (a.afiliado && a.afiliado.toLowerCase().includes(afiliadoInput)) ||
+                        (a.dni && a.dni.toLowerCase().includes(afiliadoInput))
+                    ) {
+                        if (a.contra) {
+                            contratosConAfiliado.add(a.contra);
+                        }
+                        if (a.afiliado) {
+                            // Mostrar también el código titular
+                            afiliadosEncontrados.push(a.afiliado + ' (CodTit: ' + a.codTit + ')');
+                        }
+                    }
+                });
+                
+                /*if (afiliadosEncontrados.length > 0) {
+                    alert('Afiliado(s) encontrado(s): ' + afiliadosEncontrados.join(', '));
+                }*/
+                resultados = resultados.filter(item => contratosConAfiliado.has(item.contrato));
+            }
+
+            tbody.innerHTML = resultados.map((item, idx) => {
+                let contratoCell;
+
+                if (afiliadoInput) {
+                    // Buscar el primer afiliado que coincida con el contrato y el filtro
+                    const afiliadoContrato = afiliadosData.find(a => a.contra === item.contrato && ((a.afiliado && a.afiliado.toLowerCase().includes(afiliadoInput)) || (a.dni && a.dni.toLowerCase().includes(afiliadoInput))));
+                    const nombreAfiliado = afiliadoContrato ? afiliadoContrato.afiliado : '';
+                    const codTitular = afiliadoContrato ? afiliadoContrato.codTit : '';
+                    contratoCell = `<td class="p-2 border-r font-bold text-blue-700 underline cursor-pointer" onclick=\"openContractModal('${item.contrato}','on', '${nombreAfiliado}', '${codTitular}')\">${item.contrato}</td>`;
+                } else {
+                    contratoCell = `<td class="p-2 border-r font-bold text-blue-700">${item.contrato}</td>`;
+                }
+                return `
+                    <tr class="${idx % 2 !== 0 ? 'bg-gray-50' : 'bg-white'} border-b border-gray-200 text-[11px]">
+                        <td class="p-2 border-r font-bold text-blue-800">${item.item}</td>
+                        ${contratoCell}
+                        <td class="p-2 border-r">${item.producto}</td>
+                        <td class="p-2 border-r uppercase">DEL ${item.vigencia.split(' - ')[0]} AL ${item.vigencia.split(' - ')[1]}</td>
+                        <td class="p-2 text-center">
+                            <button onclick="handleSelect(${item.item})" class="bg-[#2ecc71] hover:bg-green-600 text-white px-3 py-0.5 rounded text-[10px] font-bold uppercase">SELECCIONAR</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            document.getElementById('results-section').classList.remove('hidden');
+        }
+
+        function handleSelect(itemIdx) {
+            currentContract = contratosData.find(c => c.item === itemIdx);
+            
+            // Header Info
+            document.getElementById('detail-header-info').innerHTML = `
+                <span>EMPRESA: ${currentContract.empresa}</span>
+                <span>CONTRATO: ${currentContract.contrato}</span>
+                <span>PRODUCTO: ${currentContract.producto}</span>
+                <span>VIGENCIA: ${currentContract.vigencia}</span>
+            `;
+
+            renderCuotas();
+            showView('detail');
+        }
+
+        function renderCuotas() {
+            const tbody = document.getElementById('cuotas-table-body');
+            tbody.innerHTML = cuotasData.map((c, idx) => `
+                <tr class="${idx % 2 !== 0 ? 'bg-gray-100' : 'bg-white'} border-b border-gray-300 text-[10px]">
+                    <td class="p-2 border-r border-gray-300 text-center">${c.nro}</td>
+                    <td class="p-2 border-r border-gray-300 uppercase">${c.cuota}</td>
+                    <td class="p-2 border-r border-gray-300">${c.emision}</td>
+                    <td class="p-2 border-r border-gray-300">${c.vcto}</td>
+                    <td class="p-2 border-r border-gray-300 ${c.estado === 'PAGADO' ? 'status-pagado' : 'status-pendiente'} uppercase">${c.estado}</td>
+                    <td class="p-2 border-r border-gray-300 text-blue-700 underline cursor-pointer font-bold" onclick="openLiquidacionModal('${c.liquidacion}','${c.plan}')">${c.liquidacion}</td>
+                    <td class="p-2 border-r border-gray-300">${c.fact}</td>
+                    <td class="p-2 border-r border-gray-300">${c.pago}</td>
+                    <td class="p-2 border-r border-gray-300 text-center underline cursor-pointer font-bold" onclick="openFormaPagoModal(${JSON.stringify(c).replace(/"/g, '&quot;')})">${c.forma_pago}</td>
+                    <td class="p-2 border-r border-gray-300 text-blue-700 underline cursor-pointer font-bold" onclick="openComprobanteModal('${c.comprobante}')">${c.comprobante}</td>
+                    <td class="p-2 border-r border-gray-300 text-right font-bold">${c.monto.toFixed(2)}</td>
+                    <td class="p-2 text-center">
+                        <i class="fas fa-users text-green-600 text-lg cursor-pointer hover:text-green-800" onclick="openAfiliadosModal(${JSON.stringify(c).replace(/"/g, '&quot;')})"></i>
+                    </td>
+                </tr>
+            `).join('');
+           
+        }
+
+        // --- Modal Logic ---
+        function openContractModal(num,ver,afil,cod_titular) {
+            document.getElementById('modal-cuota-info').innerHTML =``;
+            const contract = contratosData.find(c => c.contrato === num) || contratosData[0];
+            // Mostrar u ocultar el grupo familiar según 'ver'
+            const grupoFamiliar = document.getElementById('eecc-grupo-familiar');
+           
+            if (ver === 'on') {
+                grupoFamiliar.style.display = 'flex';
+                
+            } else {
+                grupoFamiliar.style.display = 'none';
+                
+            }
+            // Si cod_titular existe, no está vacío y es numérico, filtrar por ese código
+            if (cod_titular && cod_titular.trim() !== '' && !isNaN(Number(cod_titular))) {
+                // Filtrar afiliados por codTit
+                const afiliadosFiltrados = afiliadosData.filter(a => a.contra === contract.contrato && a.codTit === cod_titular);
+                lastAfiliadosContrato = afiliadosFiltrados;
+                openAfiliadosModal({ nro: 1, emision: '01/03/2026', vcto: '30/03/2026', estado: 'PENDIENTE',mostrar: ver,afil_nom:afil }, contract);
+                renderModalTable(afiliadosFiltrados);
+
+                // Mostrar tabla de adicionales con el mismo codTit debajo de la tabla de afiliados
+                let tablaAdicional = document.getElementById('modal-adicional-table');
+                if (!tablaAdicional) {
+                    tablaAdicional = document.createElement('div');
+                    tablaAdicional.id = 'modal-adicional-table';
+                    tablaAdicional.style.marginTop = '20px';
+                    // Insertar después del fieldset de afiliados
+                    const fieldsets = document.querySelectorAll('#tab-content-afiliados .fieldset-custom');
+                    if (fieldsets.length > 0) {
+                        fieldsets[0].parentElement.insertBefore(tablaAdicional, fieldsets[0].nextSibling);
+                    } else {
+                        document.getElementById('tab-content-afiliados').appendChild(tablaAdicional);
+                    }
+                }
+                // Filtrar adicionales por codTit
+                const adicionalesFiltrados = adicionalData.filter(a => a.contra === contract.contrato && a.codTit === cod_titular);
+                if (adicionalesFiltrados.length > 0) {
+                    const totalAdicional = adicionalesFiltrados.reduce((sum, curr) => sum + (curr.prima || 0), 0);
+                    tablaAdicional.style.display = '';
+                    tablaAdicional.innerHTML = `
+                        <div class="fieldset-custom">
+                            <span class="fieldset-legend">ADICIONALES (CÓDIGO FAMILIAR: ${cod_titular})</span>
+                            <div class="overflow-x-auto border border-gray-300">
+                                <table class="w-full text-[10px] text-left border-collapse">
+                                    <thead>
+                                        <tr class="bg-gray-100 font-bold uppercase text-gray-600">
+                                            <th class="p-1.5 border-r border-gray-300">Cod. Titular</th>
+                                            <th class="p-1.5 border-r border-gray-300">Titular</th>
+                                            <th class="p-1.5 border-r border-gray-300">Cod. Afiliado</th>
+                                            <th class="p-1.5 border-r border-gray-300">Grupo Edad</th>
+                                            <th class="p-1.5 border-r border-gray-300">Plan</th>
+                                            <th class="p-1.5 border-r border-gray-300">DNI</th>
+                                            <th class="p-1.5 border-r border-gray-300">Afiliado</th>
+                                            <th class="p-1.5 border-r border-gray-300">Parentesco</th>
+                                            <th class="p-1.5 border-r border-gray-300 text-center">Edad</th>
+                                            <th class="p-1.5 border-r border-gray-300">F. Afiliación</th>
+                                            <th class="p-1.5 border-r border-gray-300 text-right">Prima</th>
+                                            <th class="p-1.5 text-center">Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${adicionalesFiltrados.map((row, idx) => `
+                                            <tr class="border-b border-gray-300 ${idx % 2 !== 0 ? 'bg-gray-50' : 'bg-white'}">
+                                                <td class="p-1.5 border-r border-gray-300">${row.codTit}</td>
+                                                <td class="p-1.5 border-r border-gray-300 uppercase">${row.titular}</td>
+                                                <td class="p-1.5 border-r border-gray-300">${row.codAf}</td>
+                                                <td class="p-1.5 border-r border-gray-300 text-center">${row.gEdad}</td>
+                                                <td class="p-1.5 border-r border-gray-300 uppercase">${row.plan}</td>
+                                                <td class="p-1.5 border-r border-gray-300">${row.dni}</td>
+                                                <td class="p-1.5 border-r border-gray-300 uppercase">${row.afiliado}</td>
+                                                <td class="p-1.5 border-r border-gray-300 uppercase">${row.parentesco}</td>
+                                                <td class="p-1.5 border-r border-gray-300 text-center">${row.edad}</td>
+                                                <td class="p-1.5 border-r border-gray-300">${row.fAf}</td>
+                                                <td class="p-1.5 border-r border-gray-300 text-right font-bold">${row.prima.toFixed(2)}</td>
+                                                <td class="p-1.5 text-center font-bold text-green-600 uppercase">${row.est}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                    <tfoot class="bg-gray-50 font-bold border-t-2 border-gray-300">
+                                        <tr>
+                                            <td colspan="10" class="p-1.5 text-right">TOTAL</td>
+                                            <td class="p-1.5 border-r border-gray-300 text-right font-bold">${totalAdicional.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                                            <td></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    tablaAdicional.innerHTML = '';
+                    tablaAdicional.style.display = 'none';
+                }
+            } else {
+                openAfiliadosModal({ nro: 1, emision: '01/03/2026', vcto: '30/03/2026', estado: 'PENDIENTE',mostrar: ver,afil_nom:afil }, contract);
+                filterModalAfiliados();
+            }
+        }
+
+        
+        // Variable global para restaurar la lista de afiliados filtrada por cuota
+        let lastAfiliadosContrato = [];
+
+        function openAfiliadosModal(cuotaInfo, contractOverride = null) {
+            
+            const contract = contractOverride || currentContract;
+            document.getElementById('modal-title').innerText = `NUMERO CONTRATO : ${contract.contrato}`;
+            document.getElementById('modal-header-banner').innerHTML = `
+                <span>EMPRESA: ${contract.empresa}</span>
+                <span>CONTRATO: ${contract.contrato}</span>
+                <span>PRODUCTO: ${contract.producto}</span>
+                <span>VIGENCIA: ${contract.vigencia}</span>
+            `;
+            if(cuotaInfo.mostrar !== 'on') {
+                document.getElementById('modal-cuota-info').innerHTML = `
+                    <span>CUOTA: ${cuotaInfo.nro || 'S/N'}</span>
+                    <span>FECHA DE EMISION: ${cuotaInfo.emision}</span>
+                    <span>FECHA DE VENCIMIENTO: ${cuotaInfo.vcto}</span>
+                    <span>ESTADO: <span class="${cuotaInfo.estado === 'PAGADO' ? 'text-green-600' : 'text-red-600'}">${cuotaInfo.estado}</span></span>
+                `;
+                document.getElementById('eecc-grupo-familiar').style.display = 'none';
+                document.getElementById('modal-search-input').style.display = 'block';
+            }else{
+                document.getElementById('modal-cuota-info').innerHTML = `<span class="text-black font-bold uppercase">TITULAR:${cuotaInfo.afil_nom}</span>`;
+                document.getElementById('eecc-grupo-familiar').style.display = 'block';
+                document.getElementById('modal-search-input').style.display = 'none';
+            }
+            document.getElementById('modal-search-input').value = '';
+            // Buscar el plan de la cuota seleccionada en cuotasData
+            let planCuota = '';
+            if (cuotaInfo) {
+                let cuotaSeleccionada = null;
+                // Si hay liquidacion, usarla como criterio principal
+                if (cuotaInfo.liquidacion) {
+                    cuotaSeleccionada = cuotasData.find(c => c.liquidacion === cuotaInfo.liquidacion);
+                }
+                // Si no hay liquidacion o no se encontró, usar nro y cuota como antes
+                if (!cuotaSeleccionada && typeof cuotaInfo.nro !== 'undefined' && cuotaInfo.cuota) {
+                    cuotaSeleccionada = cuotasData.find(c => String(c.nro) === String(cuotaInfo.nro) && c.cuota === cuotaInfo.cuota);
+                }
+                if (cuotaSeleccionada && cuotaSeleccionada.plan) {
+                    planCuota = cuotaSeleccionada.plan;
+                }
+            }
+
+            // Mostrar solo la tabla correspondiente según el plan
+            let tablaAdicional = document.getElementById('modal-adicional-table');
+            if (!tablaAdicional) {
+                tablaAdicional = document.createElement('div');
+                tablaAdicional.id = 'modal-adicional-table';
+                tablaAdicional.style.marginTop = '20px';
+                // Insertar después del fieldset de afiliados
+                const fieldsets = document.querySelectorAll('#tab-content-afiliados .fieldset-custom');
+                if (fieldsets.length > 0) {
+                    fieldsets[0].parentElement.insertBefore(tablaAdicional, fieldsets[0].nextSibling);
+                } else {
+                    document.getElementById('tab-content-afiliados').appendChild(tablaAdicional);
+                }
+            }
+
+            // Limpiar ambas tablas antes de mostrar la que corresponde
+            document.getElementById('modal-table-body').innerHTML = '';
+            tablaAdicional.innerHTML = '';
+
+            // Mostrar/ocultar la cabecera y tabla de afiliados según el plan
+            const fieldsets = document.querySelectorAll('#tab-content-afiliados .fieldset-custom');
+            const fieldsetAfiliados = fieldsets[0]; // Primer fieldset es composición (afiliados)
+            if (planCuota === 'PLAN BASE') {
+                // Mostrar solo afiliados
+                if (fieldsetAfiliados) fieldsetAfiliados.style.display = '';
+                if (tablaAdicional) tablaAdicional.style.display = 'none';
+                let afiliadosContrato = afiliadosData.filter(a => {
+                    // Filtrar ANA LUCIA LA TORRE SANDOVAL solo para cuotas >= 2 (Abril 2026 en adelante)
+                    if (a.dni === '99754045' && a.afiliado === 'ANA LUCIA LA TORRE SANDOVAL') {
+                        // Determinar el nro de cuota seleccionada
+                        let nroCuota = 0;
+                        if (cuotaInfo) {
+                            if (cuotaInfo.liquidacion) {
+                                const cSel = cuotasData.find(c => c.liquidacion === cuotaInfo.liquidacion);
+                                if (cSel) nroCuota = Number(cSel.nro);
+                            } else if (typeof cuotaInfo.nro !== 'undefined') {
+                                nroCuota = Number(cuotaInfo.nro);
+                            }
+                        }
+                        return nroCuota >= 2 && a.contra === contract.contrato && a.plan === planCuota;
+                    }
+                    return a.contra === contract.contrato && a.plan === planCuota && a.dni !== '99754045';
+                });
+                lastAfiliadosContrato = afiliadosContrato;
+                renderModalTable(afiliadosContrato);
+            } else if (planCuota && (planCuota === 'ADICIONAL 1' || planCuota === 'ADICIONAL 2')) {
+                // Ocultar la tabla de afiliados
+                if (fieldsetAfiliados) fieldsetAfiliados.style.display = 'none';
+                // Mostrar solo adicionales
+                if (tablaAdicional) tablaAdicional.style.display = '';
+                let adicionalesContrato = adicionalData.filter(a => a.contra === contract.contrato && a.plan === planCuota);
+                if (adicionalesContrato.length > 0) {
+                    const totalAdicional = adicionalesContrato.reduce((sum, curr) => sum + (curr.prima || 0), 0);
+                    tablaAdicional.innerHTML = `
+                        <div class="fieldset-custom">
+                            <span class="fieldset-legend">ADICIONALES</span>
+                            <div class="overflow-x-auto border border-gray-300">
+                                <table class="w-full text-[10px] text-left border-collapse">
+                                    <thead>
+                                        <tr class="bg-gray-100 font-bold uppercase text-gray-600">
+                                            <th class="p-1.5 border-r border-gray-300">Cod. Titular</th>
+                                            <th class="p-1.5 border-r border-gray-300">Titular</th>
+                                            <th class="p-1.5 border-r border-gray-300">Cod. Afiliado</th>
+                                            <th class="p-1.5 border-r border-gray-300">Grupo Edad</th>
+                                            <th class="p-1.5 border-r border-gray-300">Plan</th>
+                                            <th class="p-1.5 border-r border-gray-300">DNI</th>
+                                            <th class="p-1.5 border-r border-gray-300">Afiliado</th>
+                                            <th class="p-1.5 border-r border-gray-300">Parentesco</th>
+                                            <th class="p-1.5 border-r border-gray-300 text-center">Edad</th>
+                                            <th class="p-1.5 border-r border-gray-300">F. Afiliación</th>
+                                            <th class="p-1.5 border-r border-gray-300 text-right">Prima</th>
+                                            <th class="p-1.5 text-center">Estado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${adicionalesContrato.map((row, idx) => `
+                                            <tr class="border-b border-gray-300 ${idx % 2 !== 0 ? 'bg-gray-50' : 'bg-white'}">
+                                                <td class="p-1.5 border-r border-gray-300">${row.codTit}</td>
+                                                <td class="p-1.5 border-r border-gray-300 uppercase">${row.titular}</td>
+                                                <td class="p-1.5 border-r border-gray-300">${row.codAf}</td>
+                                                <td class="p-1.5 border-r border-gray-300 text-center">${row.gEdad}</td>
+                                                <td class="p-1.5 border-r border-gray-300 uppercase">${row.plan}</td>
+                                                <td class="p-1.5 border-r border-gray-300">${row.dni}</td>
+                                                <td class="p-1.5 border-r border-gray-300 uppercase">${row.afiliado}</td>
+                                                <td class="p-1.5 border-r border-gray-300 uppercase">${row.parentesco}</td>
+                                                <td class="p-1.5 border-r border-gray-300 text-center">${row.edad}</td>
+                                                <td class="p-1.5 border-r border-gray-300">${row.fAf}</td>
+                                                <td class="p-1.5 border-r border-gray-300 text-right font-bold">${row.prima.toFixed(2)}</td>
+                                                <td class="p-1.5 text-center font-bold text-green-600 uppercase">${row.est}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                    <tfoot class="bg-gray-50 font-bold border-t-2 border-gray-300">
+                                        <tr>
+                                            <td colspan="10" class="p-1.5 text-right">TOTAL</td>
+                                            <td class="p-1.5 border-r border-gray-300 text-right font-bold">${totalAdicional.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                                            <td></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                }
+            } else {
+                // Si no es ninguno de los casos, mostrar la tabla de afiliados por defecto
+                if (fieldsetAfiliados) fieldsetAfiliados.style.display = '';
+                if (tablaAdicional) tablaAdicional.style.display = 'none';
+            }
+
+            document.getElementById('modal-afiliados').style.display = 'flex';
+        }
+
+
+
+
+
+
+        function closeModal() {
+            document.getElementById('modal-afiliados').style.display = 'none';
+        }
+
+        function renderModalTable(data) {
+            const tbody = document.getElementById('modal-table-body');
+            tbody.innerHTML = data.map((row, idx) => `
+                <tr class="border-b border-gray-300 ${idx % 2 !== 0 ? 'bg-gray-50' : 'bg-white'}">
+                    <td class="p-1.5 border-r border-gray-300">${row.codTit}</td>
+                    <td class="p-1.5 border-r border-gray-300 uppercase">${row.titular}</td>
+                    <td class="p-1.5 border-r border-gray-300">${row.codAf}</td>
+                    <td class="p-1.5 border-r border-gray-300 text-center">${row.gEdad}</td>
+                    <td class="p-1.5 border-r border-gray-300 uppercase">${row.plan}</td>
+                    <td class="p-1.5 border-r border-gray-300">${row.dni}</td>
+                    <td class="p-1.5 border-r border-gray-300 uppercase">${row.afiliado}</td>
+                    <td class="p-1.5 border-r border-gray-300 uppercase">${row.parentesco}</td>
+                    <td class="p-1.5 border-r border-gray-300 text-center">${row.edad}</td>
+                    <td class="p-1.5 border-r border-gray-300">${row.fAf}</td>
+                    <td class="p-1.5 border-r border-gray-300 text-right font-bold">${row.prima.toFixed(2)}</td>
+                    <td class="p-1.5 text-center font-bold text-green-600 uppercase">${row.est}</td>
+                </tr>
+            `).join('');
+
+            const total = data.reduce((sum, curr) => sum + curr.prima, 0);
+            document.getElementById('modal-total-value').innerText = total.toLocaleString('en-US', { minimumFractionDigits: 2 });
+        }
+
+        function filterModalAfiliados() {
+            const input = document.getElementById('modal-search-input');
+            const query = input.value.trim().toLowerCase();
+            // Si el input está vacío, restaurar la última lista mostrada
+            // Nueva tabla para resultados de búsqueda por código titular
+            let tablaBusqueda = document.getElementById('tabla-busqueda-codtit');
+            if (!tablaBusqueda) {
+                tablaBusqueda = document.createElement('div');
+                tablaBusqueda.id = 'tabla-busqueda-codtit';
+                tablaBusqueda.style.marginTop = '20px';
+                const grupoFamiliar = document.getElementById('eecc-grupo-familiar');
+                grupoFamiliar.parentElement.insertBefore(tablaBusqueda, grupoFamiliar.nextSibling);
+            }
+
+            if (!query) {
+                // Ocultar la tabla de búsqueda si no hay query
+                tablaBusqueda.innerHTML = '';
+                renderModalTable(lastAfiliadosContrato);
+                return;
+            }
+            // Buscar el primer afiliado que coincida
+            const encontrado = lastAfiliadosContrato.find(a => 
+                (a.afiliado && a.afiliado.toLowerCase().includes(query)) ||
+                (a.dni && a.dni.toLowerCase().includes(query)) ||
+                (a.titular && a.titular.toLowerCase().includes(query))
+            );
+            if (encontrado) {
+                // Mostrar solo los afiliados con el mismo codTit que el encontrado en una nueva tabla
+                const familiares = lastAfiliadosContrato.filter(a => a.codTit === encontrado.codTit);
+                let html = `<div class="fieldset-custom"><span class="fieldset-legend">GRUPO FAMILIAR (BÚSQUEDA)</span><div class="overflow-x-auto border border-gray-300"><table class="w-full text-[10px] text-left border-collapse"><thead><tr class="grid-header-gray"><th class="p-1.5 border-r border-gray-400">CODIGO TITULAR</th><th class="p-1.5 border-r border-gray-400">TITULAR</th><th class="p-1.5 border-r border-gray-400">CODIGO AFILIADO</th><th class="p-1.5 border-r border-gray-400">GRUPO EDAD</th><th class="p-1.5 border-r border-gray-400">PLAN</th><th class="p-1.5 border-r border-gray-400">DNI</th><th class="p-1.5 border-r border-gray-400">AFILIADO</th><th class="p-1.5 border-r border-gray-400">PARENTESCO</th><th class="p-1.5 border-r border-gray-400 text-center">EDAD</th><th class="p-1.5 border-r border-gray-400">FECHA DE AFILIACION</th><th class="p-1.5 border-r border-gray-400 text-right">PRIMA</th><th class="p-1.5 text-center">ESTADO</th></tr></thead><tbody>`;
+                html += familiares.map((row, idx) => `
+                    <tr class="border-b border-gray-300 ${idx % 2 !== 0 ? 'bg-gray-50' : 'bg-white'}">
+                        <td class="p-1.5 border-r border-gray-300">${row.codTit}</td>
+                        <td class="p-1.5 border-r border-gray-300 uppercase">${row.titular}</td>
+                        <td class="p-1.5 border-r border-gray-300">${row.codAf}</td>
+                        <td class="p-1.5 border-r border-gray-300 text-center">${row.gEdad}</td>
+                        <td class="p-1.5 border-r border-gray-300 uppercase">${row.plan}</td>
+                        <td class="p-1.5 border-r border-gray-300">${row.dni}</td>
+                        <td class="p-1.5 border-r border-gray-300 uppercase">${row.afiliado}</td>
+                        <td class="p-1.5 border-r border-gray-300 uppercase">${row.parentesco}</td>
+                        <td class="p-1.5 border-r border-gray-300 text-center">${row.edad}</td>
+                        <td class="p-1.5 border-r border-gray-300">${row.fAf}</td>
+                        <td class="p-1.5 border-r border-gray-300 text-right font-bold">${row.prima.toFixed(2)}</td>
+                        <td class="p-1.5 text-center font-bold text-green-600 uppercase">${row.est}</td>
+                    </tr>
+                `).join('');
+                html += '</tbody></table></div></div>';
+                tablaBusqueda.innerHTML = html;
+            } else {
+                tablaBusqueda.innerHTML = '';
+            }
+            // La tabla principal no se modifica
+        }
+        
+
+        // Close on outside click
+        window.onclick = function(event) {
+            const modal = document.getElementById('modal-afiliados');
+            if (event.target == modal) closeModal();
+            if (!event.target.closest('.autocomplete-wrapper')) {
+                document.getElementById('autocomplete-list').classList.add('hidden');
+            }
+        }
+
+         // --- Liquidación Modal ---
+            function openLiquidacionModal(liquidacionNum,plan) {
+                //document.getElementById('modal-liquidacion-text').innerText = 'detalle_lq.JPG'; // Aquí podrías cargar dinámicamente la imagen o información de la liquidación según el número
+                document.getElementById('modal-liquidacion').style.display = 'flex';
+                document.getElementById('modal-title-lq').innerText = `LIQUIDACION ${liquidacionNum}  - ${plan}`;
+            }
+            
+            function closeLiquidacionModal() {
+                document.getElementById('modal-liquidacion').style.display = 'none';
+            }
+        // --- Forma de pago Modal ---
+            function openFormaPagoModal(cuotaInfo, contractOverride = null) {
+                
+                document.getElementById('modal-forma-pago').style.display = 'flex';
+
+                const contract = contractOverride || currentContract;
+                document.getElementById('monto_total').innerHTML = `${cuotaInfo.monto || '0.00'}`;
+                document.getElementById('monto_pagado').innerHTML = `${cuotaInfo.monto || '0.00'}`;
+                
+            }
+
+            function closeFormaPagoModal() {
+                document.getElementById('modal-forma-pago').style.display = 'none';
+            }
+
+
+            // --- Factura Modal ---
+            function openComprobanteModal(facturaNum) {
+                
+                document.getElementById('modal-comprobante').style.display = 'flex';
+                document.getElementById('num_factura').innerHTML = facturaNum;
+
+                // Selección de imagen según número de factura
+                let imgSrc = '';
+                if (facturaNum === '00002525' || facturaNum === 'FF001-00002525') {
+                    imgSrc = 'factura.jpg';
+                } else if (facturaNum === '00002526' || facturaNum === 'FF001-00002526') {
+                    imgSrc = 'factura2.jpg';
+                } else {
+                    imgSrc = 'factura.JPG'; // Imagen por defecto
+                }
+
+                // Renderizar la imagen en el modal
+                const imgHtml = `<img src="${imgSrc}" alt="Imagen Factura" class="w-full max-w-md h-auto mx-auto rounded shadow object-contain">`;
+                // Buscar el contenedor de la imagen y reemplazar su contenido
+                const modal = document.getElementById('modal-comprobante');
+                const imgContainer = modal.querySelector('.overflow-x-auto');
+                if (imgContainer) {
+                    imgContainer.innerHTML = imgHtml;
+                }
+            }
+             function closeComprobanteModal() {
+                document.getElementById('modal-comprobante').style.display = 'none';
+            }
+
+
+         
+    </script>
+
+    <!-- Modal Liquidación -->
+    <div id="modal-liquidacion" class="modal-overlay">
+        <div class="modal-container" style="max-width:850px;width:100%;">
+            <div class="modal-header">
+                <span id="modal-title-lq" class="uppercase"></span>
+                <button onclick="closeLiquidacionModal()" class="text-white hover:text-gray-200 text-xl font-bold">&times;</button>
+            </div>
+            
+            <div class="p-4">
+                <!-- Banner Info -->
+                 <img src="detalle_lq.JPG" alt="Imagen Liquidación">
+
+                <div class="mt-6 flex justify-center">
+                    <button onclick="closeLiquidacionModal()" class="bg-red-700 text-white font-bold uppercase px-24 py-2 rounded-sm text-xs shadow-md hover:bg-red-800">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Forma de Pago -->
+    <div id="modal-forma-pago" class="modal-overlay">
+        <div class="modal-container" style="max-width:650px;width:100%;">
+            <div class="modal-header">
+                <span id="modal-title" class="uppercase">DETALLE DE PAGO</span>
+                <button onclick="closeFormaPagoModal()" class="text-white hover:text-gray-200 text-xl font-bold">&times;</button>
+            </div>
+            <div id="modal-forma-pago-info" class="text-[10px] font-bold flex gap-10 mb-3 px-2">
+                        <!-- Example: CUOTA: 1  FECHA DE EMISION: 01/03/2026 ... -->
+                    </div>
+            <div class="p-4">
+                <!-- Banner Info -->
+                <div class="text-[10px] font-bold text-gray-700 mb-4 bg-blue-50 p-2 flex justify-between uppercase border-b border-blue-200">
+                    <div id="modal-header-banner" class="flex gap-6">
+                        <!-- Filled by JS -->
+                         NRO CONTRATO: 1000005 | PRODUCTO: EPS | CUOTA: MARZO 2026 | FECHA PAGO: 31/03/2026
+                         
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                            <table class="w-full text-[10px] text-left border-collapse border border-gray-300">
+                                <thead class="bg-gray-100 font-bold uppercase text-gray-600">
+                                    <tr>
+                                        <th class="p-2 border border-gray-300">FORMA DE PAGO</th>
+                                        <th class="p-2 border border-gray-300">BANCO</th>
+                                        <th class="p-2 border border-gray-300">NRO OPERACION</th>
+                                        <th class="p-2 border border-gray-300">FECHA OPERACION</th>
+                                        <th class="p-2 border border-gray-300">MONTO TOTAL</th>
+                                        <th class="p-2 border border-gray-300">MONTO PAGADO</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                        <tr>
+                                            <td>DEPOSITO</td>
+                                                <td>BCP</td>
+                                                <td>1234567890</td>
+                                                <td>31/03/2026</td>
+                                                <td class="text-right" id="monto_total"></td>
+                                                <td class="text-right" id="monto_pagado"></td>        
+                                        </tr>
+                                        <tr class="font-bold bg-gray-100 font-bold uppercase text-gray-600">
+                                            <td colspan="4">
+                                            </td>
+                                            <td>
+                                                    MONTO PAGADO:<br>
+                                                    MONTO PENDIENTE<br>
+                                                    MONTO TOTAL:
+                                            </td>
+                                            <td class="text-right font-bold">
+                                                    <span id="t_monto_pagado"></span><br>
+                                                    0.00<br>
+                                                    <span id="t_monto_total"></span>
+                                            </td>
+                                        </tr>
+                                </tbody>
+
+                            </table>
+                </div>
+                <div class="mt-6 flex justify-center">
+                    <button onclick="closeFormaPagoModal()" class="bg-red-700 text-white font-bold uppercase px-24 py-2 rounded-sm text-xs shadow-md hover:bg-red-800">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal Factura -->
+    <div id="modal-comprobante" class="modal-overlay">
+        <div class="modal-container" style="max-width:500px;width:100%;">
+            <div class="modal-header">
+                <span id="modal-title" class="uppercase">COMPROBANTE <span id="num_factura"></span></span>
+                <button onclick="closeComprobanteModal()" class="text-white hover:text-gray-200 text-xl font-bold">&times;</button>
+            </div>
+            
+            <div class="p-4">
+                <!-- Banner Info -->
+                <div class="text-[10px] font-bold text-gray-700 mb-4 bg-blue-50 p-2 flex justify-between uppercase border-b border-blue-200">
+                    <div id="modal-header-banner" class="flex gap-6">
+                        <!-- Filled by JS -->
+                        <button class="bg-red-700 text-white px-3 py-1 rounded text-[10px] font-bold uppercase flex items-center gap-1"><i class="fas fa-file-pdf"></i> PDF</button>
+                        <button class="bg-orange-500 text-white px-3 py-1 rounded text-[10px] font-bold uppercase flex items-center gap-1"><i class="fas fa-print"></i> Imprimir</button>
+                        <button class="bg-green-600 text-white px-3 py-1 rounded text-[10px] font-bold uppercase flex items-center gap-1"><i class="fas fa-download"></i> Descargar XML</button>
+                        <button class="bg-blue-600 text-white px-3 py-1 rounded text-[10px] font-bold uppercase flex items-center gap-1" id="btn-mostrar-form-correo" onclick="mostrarFormCorreo(event)"><i class="fas fa-mail-forward"></i> Enviar</button>
+                                                <!-- Modal de envío de correo -->
+                                                <div id="modal-envio-correo" class="modal-overlay" style="z-index: 200; display: none;">
+                                                    <div class="modal-container" style="max-width: 350px; width: 96%;">
+                                                        <div class="modal-header">
+                                                            <span class="uppercase text-[12px]">Enviar comprobante por correo</span>
+                                                            <button onclick="cerrarModalCorreo()" class="text-white hover:text-gray-200 text-xl font-bold">&times;</button>
+                                                        </div>
+                                                        <div class="p-4">
+                                                            <form onsubmit="enviarCorreo(event)">
+                                                                <label class="block text-[10px] font-bold mb-1">Correo(s) de destino:</label>
+                                                                <input type="text" id="input-correos" class="w-full border border-gray-300 rounded px-2 py-1 text-[11px] mb-2" placeholder="Ingrese uno o más correos separados por coma">
+                                                                <button type="submit" class="bg-blue-600 text-white px-3 py-1 rounded text-[10px] font-bold uppercase mt-1 w-full">Enviar Correo</button>
+                                                                <div id="mensaje-exito-correo" class="hidden mt-2 text-green-700 text-[11px] font-bold"></div>
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                        <script>
+                            // --- Modal de envío de correo ---
+                            function mostrarFormCorreo(e) {
+                                e.preventDefault();
+                                document.getElementById('modal-envio-correo').style.display = 'flex';
+                                document.getElementById('input-correos').value = '';
+                                document.getElementById('mensaje-exito-correo').classList.add('hidden');
+                            }
+
+                            function cerrarModalCorreo() {
+                                document.getElementById('modal-envio-correo').style.display = 'none';
+                            }
+
+                            function enviarCorreo(e) {
+                                e.preventDefault();
+                                const input = document.getElementById('input-correos');
+                                const correos = input.value.split(',').map(c => c.trim()).filter(c => c.length > 0);
+                                const msg = document.getElementById('mensaje-exito-correo');
+                                if (correos.length === 0) {
+                                    msg.textContent = 'Ingrese al menos un correo válido.';
+                                    msg.classList.remove('text-green-700');
+                                    msg.classList.add('text-red-700');
+                                    msg.classList.remove('hidden');
+                                    return;
+                                }
+                                // Simulación de envío
+                                msg.textContent = '¡Correo enviado exitosamente a: ' + correos.join(', ') + '!';
+                                msg.classList.remove('text-red-700');
+                                msg.classList.add('text-green-700');
+                                msg.classList.remove('hidden');
+                                setTimeout(() => {
+                                    cerrarModalCorreo();
+                                }, 1200);
+                            }
+                            // Cerrar modal al hacer click fuera
+                            window.addEventListener('click', function(event) {
+                                const modal = document.getElementById('modal-envio-correo');
+                                if (modal.style.display === 'flex' && event.target === modal) {
+                                    cerrarModalCorreo();
+                                }
+                            });
+                        </script>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                            <img  alt="Imagen Factura" class="w-full max-w-md h-auto mx-auto rounded shadow object-contain">
+                </div>
+                <div class="mt-6 flex justify-center">
+                    <button onclick="closeComprobanteModal()" class="bg-red-700 text-white font-bold uppercase px-24 py-2 rounded-sm text-xs shadow-md hover:bg-red-800">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+            // --- Modal Grupo Familiar ---
+        function detalleAfilidos(plan) {
+            let data = [];
+            if (plan === 'PLAN BASE') {
+                data = detalleGrupoFamiliar.filter(a => a.plan === plan);
+            } else if (plan === 'ADICIONAL 1' || plan === 'ADICIONAL 2') {
+                data = adicionalGrupoFamiliar.filter(a => a.plan === plan);
+            }
+            if (data.length === 0) {
+                alert('No se encontraron afiliados para el plan seleccionado.');
+                return;
+            }
+            // Obtener nombre del titular (primer afiliado con parentesco TITULAR)
+            const titular = data.find(a => a.parentesco === 'TITULAR');
+            const nombreTitular = titular ? titular.titular : data[0].titular;
+
+            // Crear el modal si no existe
+            let modal = document.getElementById('modal-grupo-familiar');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'modal-grupo-familiar';
+                modal.className = 'modal-overlay';
+                modal.innerHTML = `
+                    <div class="modal-container" style="max-width:900px;width:100%;">
+                        <div class="modal-header">
+                            <span id="modal-grupo-familiar-title" class="uppercase"></span>
+                            <button id="cerrar-modal-grupo-familiar" class="text-white hover:text-gray-200 text-xl font-bold">&times;</button>
+                        </div>
+                        <div class="p-4" id="modal-grupo-familiar-content"></div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            }
+            document.getElementById('cerrar-modal-grupo-familiar').onclick = function() {
+                document.getElementById('modal-grupo-familiar').style.display = 'none';
+            };
+            // Filtro automático al escribir
+            document.getElementById('buscador-grupo-familiar') && (document.getElementById('buscador-grupo-familiar').oninput = function() {
+                const val = this.value.trim().toLowerCase();
+                let filtrados = data.filter(a =>
+                    (a.afiliado && a.afiliado.toLowerCase().includes(val)) ||
+                    (a.dni && a.dni.toLowerCase().includes(val))
+                );
+                if (val === '') filtrados = data;
+                const tbody = document.getElementById('tbody-grupo-familiar-modal');
+                tbody.innerHTML = filtrados.map((row, idx) => `
+                    <tr class="border-b border-gray-300 ${idx % 2 !== 0 ? 'bg-gray-50' : 'bg-white'}">
+                        <td class="p-1.5 border-r border-gray-300">${row.codTit}</td>
+                        <td class="p-1.5 border-r border-gray-300 uppercase">${row.titular}</td>
+                        <td class="p-1.5 border-r border-gray-300">${row.codAf}</td>
+                        <td class="p-1.5 border-r border-gray-300 text-center">${row.gEdad}</td>
+                        <td class="p-1.5 border-r border-gray-300 uppercase">${row.plan}</td>
+                        <td class="p-1.5 border-r border-gray-300">${row.dni}</td>
+                        <td class="p-1.5 border-r border-gray-300 uppercase">${row.afiliado}</td>
+                        <td class="p-1.5 border-r border-gray-300 uppercase">${row.parentesco}</td>
+                        <td class="p-1.5 border-r border-gray-300 text-center">${row.edad}</td>
+                        <td class="p-1.5 border-r border-gray-300">${row.fAf}</td>
+                        <td class="p-1.5 border-r border-gray-300 text-right font-bold">${row.prima.toFixed(2)}</td>
+                        <td class="p-1.5 text-center font-bold text-green-600 uppercase">${row.est}</td>
+                    </tr>
+                `).join('');
+            });
+            // Título principal
+            document.getElementById('modal-grupo-familiar-title').innerText = `Grupo Familiar de : ${nombreTitular}`;
+            // Título de la tabla según el plan
+            let tituloTabla = '';
+            if (plan === 'PLAN BASE') {
+                tituloTabla = 'Composición Familiar (Plan Base)';
+            } else if (plan === 'ADICIONAL 1') {
+                tituloTabla = 'Adicionales (Adicional 1)';
+            } else if (plan === 'ADICIONAL 2') {
+                tituloTabla = 'Adicionales (Adicional 2)';
+            }
+            // Buscador
+            let html = `<div class='mb-2 flex items-center gap-2'><input id='buscador-grupo-familiar' type='search' placeholder='Buscar afiliado o DNI...' class='border border-gray-400 px-2 py-1 text-[10px] uppercase w-64 outline-none'><button id='btn-filtrar-grupo-familiar' class='bg-blue-600 text-white px-3 py-1 rounded text-[10px] font-bold uppercase'>Filtrar</button></div>`;
+            html += `<div class='mb-2 font-bold uppercase text-blue-700'>${tituloTabla}</div>`;
+            html += `<div class='overflow-x-auto'><table class='w-full text-[10px] text-left border-collapse'><thead><tr class='grid-header-gray'>`;
+            html += `<th class='p-1.5 border-r border-gray-400'>CODIGO TITULAR</th><th class='p-1.5 border-r border-gray-400'>TITULAR</th><th class='p-1.5 border-r border-gray-400'>CODIGO AFILIADO</th><th class='p-1.5 border-r border-gray-400'>GRUPO EDAD</th><th class='p-1.5 border-r border-gray-400'>PLAN</th><th class='p-1.5 border-r border-gray-400'>DNI</th><th class='p-1.5 border-r border-gray-400'>AFILIADO</th><th class='p-1.5 border-r border-gray-400'>PARENTESCO</th><th class='p-1.5 border-r border-gray-400 text-center'>EDAD</th><th class='p-1.5 border-r border-gray-400'>FECHA DE AFILIACION</th><th class='p-1.5 border-r border-gray-400 text-right'>PRIMA</th><th class='p-1.5 text-center'>ESTADO</th>`;
+            html += `</tr></thead><tbody id='tbody-grupo-familiar-modal'>`;
+            html += data.map((row, idx) => `
+                <tr class="border-b border-gray-300 ${idx % 2 !== 0 ? 'bg-gray-50' : 'bg-white'}">
+                    <td class="p-1.5 border-r border-gray-300">${row.codTit}</td>
+                    <td class="p-1.5 border-r border-gray-300 uppercase">${row.titular}</td>
+                    <td class="p-1.5 border-r border-gray-300">${row.codAf}</td>
+                    <td class="p-1.5 border-r border-gray-300 text-center">${row.gEdad}</td>
+                    <td class="p-1.5 border-r border-gray-300 uppercase">${row.plan}</td>
+                    <td class="p-1.5 border-r border-gray-300">${row.dni}</td>
+                    <td class="p-1.5 border-r border-gray-300 uppercase">${row.afiliado}</td>
+                    <td class="p-1.5 border-r border-gray-300 uppercase">${row.parentesco}</td>
+                    <td class="p-1.5 border-r border-gray-300 text-center">${row.edad}</td>
+                    <td class="p-1.5 border-r border-gray-300">${row.fAf}</td>
+                    <td class="p-1.5 border-r border-gray-300 text-right font-bold">${row.prima.toFixed(2)}</td>
+                    <td class="p-1.5 text-center font-bold text-green-600 uppercase">${row.est}</td>
+                </tr>
+            `).join('');
+            html += '</tbody></table></div>';
+            document.getElementById('modal-grupo-familiar-content').innerHTML = html;
+            modal.style.display = 'flex';
+        }
+</script>
+    
+</body>
+</html>

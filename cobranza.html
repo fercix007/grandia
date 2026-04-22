@@ -1,0 +1,1653 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grandia - Cobranza</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --grandia-navy: #1a233e;
+            --grandia-blue: #005696;
+            --grandia-light-blue: #e8f4f8;
+            --grandia-accent: #fbc02d;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7f9;
+            font-size: 12px;
+        }
+        .sidebar {
+            background-color: var(--grandia-navy);
+            width: 240px;
+            min-height: 100vh;
+        }
+        .header-top {
+            background-color: var(--grandia-blue);
+            color: white;
+            height: 50px;
+        }
+        .btn-buscar {
+            background-color: #3b82f6;
+            color: white;
+            padding: 5px 20px;
+            border-radius: 4px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .table-header {
+            background-color: #e5e7eb;
+            color: #374151;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 10px;
+        }
+        
+        .badge {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: bold;
+            display: inline-block;
+            min-width: 70px;
+        }
+        .bg-pagado { background-color: #dcfce7; color: #166534; }
+        .bg-pendiente { background-color: #fee2e2; color: #991b1b; }
+        .bg-aprobado { background-color: #dbeafe; color: #1e40af; }
+        .bg-pagado-parcialmente { background-color: #fef3c7; color: #92400e; }
+
+        .input-filter {
+            width: 100%;
+            border: 1px solid #d1d5db;
+            padding: 4px 8px;
+            font-size: 11px;
+            outline: none;
+            height: 28px;
+            border-radius: 2px;
+            background-color: white;
+        }
+        .input-form, .input-select {
+            width: 100%;
+            border: 1px solid #d1d5db;
+            padding: 8px 10px;
+            font-size: 12px;
+            outline: none;
+            border-radius: 4px;
+            background-color: white;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            color: #4b5563;
+            margin-bottom: 2px;
+            text-transform: uppercase;
+            font-size: 10px;
+        }
+
+        /* MENÚ FLOTANTE */
+        #floating-dropdown {
+            display: none;
+            position: fixed;
+            background-color: white;
+            min-width: 200px;
+            box-shadow: 0px 10px 25px rgba(0,0,0,0.15);
+            z-index: 9999;
+            border-radius: 6px;
+            border: 1px solid #d1d5db;
+            padding: 4px 0;
+        }
+        #floating-dropdown a {
+            color: #374151;
+            padding: 10px 14px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 11px;
+            border-bottom: 1px solid #f3f4f6;
+            transition: background 0.2s;
+            cursor: pointer;
+        }
+        #floating-dropdown a:last-child { border-bottom: none; }
+        #floating-dropdown a:hover {
+            background-color: #eff6ff;
+            color: var(--grandia-blue);
+        }
+        #floating-dropdown i {
+            width: 16px;
+            text-align: center;
+            font-size: 13px;
+        }
+        
+        .btn-opciones {
+            background-color: #f3f4f6;
+            border: 1px solid #d1d5db;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            color: #374151;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .btn-opciones:hover { 
+            background-color: #e5e7eb;
+            border-color: #9ca3af;
+        }
+        .btn-opciones.active {
+            background-color: var(--grandia-blue);
+            color: white;
+            border-color: var(--grandia-blue);
+        }
+
+        /* MODALES */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: white;
+            width: 450px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        /* Animación de carga */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .input-email {
+            width: 100%;
+            border: 1px solid #d1d5db;
+            padding: 10px;
+            font-size: 12px;
+            border-radius: 4px;
+            margin-top: 5px;
+            outline: none;
+        }
+
+        /* Notificación de descarga */
+        #download-toast {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #1e293b;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 6px;
+            z-index: 10001;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            align-items: center;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body class="flex">
+
+    <!-- Sidebar -->
+    <div class="sidebar text-white shrink-0">
+        <div class="p-4 bg-white flex justify-between items-center">
+            SABSA
+            <i class="fas fa-chevron-left text-gray-400 cursor-pointer"></i>
+        </div>
+        <div class="p-4 flex items-center gap-3 border-b border-gray-700">
+            <div class="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center overflow-hidden">
+                <i class="fas fa-user text-2xl"></i>
+            </div>
+            <div>
+                <p class="text-xs font-bold">Ejecutivo</p>
+                <p class="text-[10px] text-gray-400 uppercase">Ejecutivo</p>
+            </div>
+            <i class="fas fa-cog ml-auto text-gray-400 text-xs"></i>
+        </div>
+        
+        <nav class="mt-4">
+            <div class="px-4 py-3 flex items-center gap-3 hover:bg-gray-800 cursor-pointer">
+                <i class="fas fa-home text-sm"></i>
+                <span class="uppercase">Inicio</span>
+            </div>
+            <div class="px-4 py-3 flex items-center gap-3 hover:bg-gray-800 cursor-pointer">
+                <i class="fas fa-file-invoice-dollar text-sm"></i>
+                <span class="uppercase">Estado de Cuenta</span>
+                <script>
+                                    // Navegación a cobranza.html
+                                    document.currentScript.parentElement.onclick = function() {
+                                        window.location.href = 'index.html';
+                                    };
+                                </script>
+            </div>
+            <div class="px-4 py-3 flex items-center gap-3 bg-blue-600 cursor-pointer border-r-4 border-yellow-400">
+                <i class="fas fa-money-check-alt text-sm"></i>
+                <span class="uppercase">Cobranza</span>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Modal Notas de Crédito/Débito -->
+    <div id="modal-notas" class="modal-overlay">
+        <div class="modal-content" style="max-width:600px;width:100%;">
+            <div class="bg-blue-800 text-white p-4 flex justify-between items-center">
+                <h4 class="font-bold uppercase tracking-wide">Notas de Crédito/Débito</h4>
+                <i class="fas fa-times cursor-pointer" onclick="cerrarModal('modal-notas')"></i>
+            </div>
+            <div class="p-4">
+                <div id="contenido-nota" >
+                    <form id="form-nota" class="bg-blue-50 p-4 rounded shadow border border-blue-200 mb-4" onsubmit="guardarNota(event)">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[10px] font-bold mb-1">Tipo de Nota</label>
+                                <select id="tipo-nota" class="w-full border border-gray-300 rounded px-2 py-1 text-[11px] mb-2" onchange="actualizarOpcionesMotivo()">
+                                    <option value="credito">Nota de Crédito</option>
+                                    <option value="debito">Nota de Débito</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold mb-1">Factura Referencia</label>
+                                <input type="text" id="factura-referencia" class="w-full border border-gray-300 rounded px-2 py-1 text-[11px] mb-2 bg-gray-100" readonly>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold mb-1">Motivo</label>
+                                <select id="motivo-nota" class="w-full border border-gray-300 rounded px-2 py-1 text-[11px] mb-2" onchange="mostrarCampoOtroMotivo()">
+                                    <!-- Opciones dinámicas -->
+                                </select>
+                            </div>
+                            <div id="campo-otro-motivo" style="display:none;" class="col-span-1 md:col-span-2">
+                                <label class="block text-[10px] font-bold mb-1">Detalle del motivo</label>
+                                <textarea id="detalle-otro-motivo" class="w-full border border-gray-300 rounded px-2 py-1 text-[11px] mb-2" rows="2" placeholder="Ingrese el motivo..."></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold mb-1">Monto</label>
+                                <input type="number" id="monto-nota" class="w-full border border-gray-300 rounded px-2 py-1 text-[11px] mb-2" placeholder="0.00" min="0" step="0.01" required>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex justify-end">
+                            <button type="submit" class="bg-green-700 text-white px-6 py-2 rounded text-[11px] font-bold uppercase flex items-center gap-1"><i class="fas fa-save"></i> Guardar</button>
+                        </div>
+                    </form>
+                    <div class="bg-white p-2 rounded shadow border border-gray-200">
+                        <h4 class="font-bold text-gray-700 uppercase text-xs mb-2">Notas de Crédito/Débito Registradas</h4>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full text-[10px] text-left border-collapse border border-gray-300">
+                                <thead class="bg-gray-100 font-bold uppercase text-gray-600">
+                                    <tr>
+                                        <th class="p-2 border border-gray-300">N° Nota</th>
+                                        <th class="p-2 border border-gray-300">Tipo</th>
+                                        <th class="p-2 border border-gray-300">Factura Ref.</th>
+                                        <th class="p-2 border border-gray-300">Motivo</th>
+                                        <th class="p-2 border border-gray-300">Monto</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="grilla-notas">
+                                    <!-- Notas agregadas -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-100 p-4 flex justify-center">
+                <button onclick="cerrarModal('modal-notas')" class="bg-red-600 hover:bg-red-700 text-white font-bold uppercase py-2 px-8 rounded shadow text-xs transition-colors">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col">
+        <header class="header-top flex items-center justify-between px-6">
+            <div class="flex gap-4 items-center">
+                <i class="fas fa-bars cursor-pointer"></i>
+                <span class="text-xs font-bold tracking-widest uppercase">Módulo de Cobranzas</span>
+            </div>
+            <div class="flex items-center gap-4 text-[10px]">
+                <div class="flex items-center gap-2"><span>Usuario: Ejecutivo</span> <i class="fas fa-user-circle text-lg"></i></div>
+            </div>
+        </header>
+
+        <main class="p-4">
+            <!-- Filtros -->
+            <div class="bg-white p-4 rounded shadow-sm border border-gray-200 mb-4">
+                <div class="grid grid-cols-7 gap-3 items-end">
+                    <div>
+                        <label>Año</label>
+                        <select id="f-anio" class="input-filter">
+                            <option value="2026" selected>2026</option>
+                            <option value="2025">2025</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Mes</label>
+                        <select id="f-mes" class="input-filter">
+                            <option value="03" selected>MARZO</option>
+                            <option value="02">FEBRERO</option>
+                            <option value="01">ENERO</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Estado LQ</label>
+                        <select id="f-estado" class="input-filter">
+                            <option value="TODOS">TODOS</option>
+                            <option value="PENDIENTE">PENDIENTE</option>
+                            <option value="PAGADO">PAGADO</option>
+                            <option value="APROBADO">APROBADO</option>
+                            <option value="PAGADO_PARCIALMENTE">PAGADO PARCIALMENTE</option>
+                            <option value="FACTURADO">FACTURADO</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Empresa / Cliente</label>
+                        <input type="text" id="f-empresa" placeholder="RUC o Nombre" class="input-filter uppercase">
+                    </div>
+                    <div>
+                        <label>Producto</label>
+                        <select id="f-producto" class="input-filter">
+                            <option value="TODOS">TODOS</option>
+                            <option value="EPS">EPS</option>
+                            <option value="SCTR">SCTR</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>N° Contrato</label>
+                        <input type="text" id="f-contrato" placeholder="Ej: 20000001" class="input-filter uppercase">
+                    </div>
+                    <div class="flex">
+                        <button onclick="filtrarCobranza()" class="btn-buscar w-full h-[28px] flex items-center justify-center gap-2">
+                            <i class="fas fa-search"></i> BUSCAR
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla de Resultados -->
+            <div class="bg-white rounded shadow-sm border border-gray-200">
+                <div class="p-3 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+                    <h3 class="font-bold text-gray-700 uppercase">Listado de Facturación y Cobranza</h3>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="table-header">
+                                <th class="p-2 border-b border-r text-center">Opciones</th>
+                                <th class="p-2 border-b border-r">Empresa</th>
+                                <th class="p-2 border-b border-r">N° Contrato</th>
+                                <th class="p-2 border-b border-r">Producto</th>
+                                <th class="p-2 border-b border-r">N° Liquidación</th>
+                                <th class="p-2 border-b border-r text-center">Estado de Lq</th>
+                                <th class="p-2 border-b border-r text-center">Forma de Pago</th>
+                                <th class="p-2 border-b border-r text-center">Vigencia</th>
+                                <th class="p-2 border-b border-r">Factura</th>
+                                <th class="p-2 border-b text-center">Nota Crédito</th>
+                                <th class="p-2 border-b text-center">Nota Débito</th>
+                                <th class="p-2 border-b text-right">Monto Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cobranza-body">
+                            <!-- Datos generados dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+<script>
+        // Mostrar/ocultar la opción de Notas de Crédito/Débito según si hay factura seleccionada
+        function mostrarOpcionNotas(facturaNum) {
+            var opcionNotas = document.getElementById('opcion-notas');
+            if (facturaNum) {
+                opcionNotas.style.display = '';
+                opcionNotas.onclick = function() { abrirNotasModal(facturaNum); };
+            } else {
+                opcionNotas.style.display = 'none';
+                opcionNotas.onclick = null;
+            }
+        }
+        
+        // Llamar a mostrarOpcionNotas cuando se seleccione una fila o factura
+        // Ejemplo: después de seleccionar una fila en la grilla principal
+        // mostrarOpcionNotas(facturaNum);
+</script>
+    <!-- Menú Flotante -->
+    <div id="floating-dropdown">
+        <a onclick="abrirEstadoCuenta()"><i class="fas fa-file-invoice text-blue-600"></i> Ver estado de cuenta</a>
+        <a onclick="abrirEnviarLiquidacion()"><i class="fas fa-paper-plane text-green-600"></i> Enviar liquidación</a>
+        <a onclick="simularDescargaExcel()"><i class="fas fa-download text-orange-500"></i> Descargar detalle</a>
+        <a onclick="abrirActualizarLiquidacion()"><i class="fas fa-sync-alt text-purple-600"></i> Actualizar liquidación</a>
+        <a onclick="abrirAprobarFacturar()"><i class="fas fa-check-circle text-blue-800"></i> Aprobar liquidación</a>
+        <a id="opcion-facturar" style="display:none;"><i class="fas fa-shopping-cart text-lime-800"></i> Facturar liquidación</a>
+        <!-- La opción de Notas de Crédito/Débito solo se muestra si hay factura seleccionada -->
+        <a id="opcion-notas" style="display:none;"><i class="fas fa-file-invoice-dollar text-blue-400"></i> Notas de Crédito/Débito</a>
+        <!-- Eliminado: solo debe existir la opción controlada por estado -->
+            <a id="opcion-registrar-pago" style="display:none;"><i class="fas fa-cash-register text-emerald-600"></i> Registrar pago</a>
+        <a onclick="abrirHistorial()"><i class="fas fa-history text-gray-600"></i> Historial</a>
+    </div>
+<!-- Modal Historial Tracking -->
+        <div id="modal-historial" class="modal-overlay">
+            <div class="modal-content" style="max-width:500px;width:100%;height:700px;display:flex;flex-direction:column;">
+                <div class="bg-gray-800 text-white p-4 flex justify-between items-center">
+                    <h4 class="font-bold uppercase tracking-wide">Historial de Acciones</h4>
+                    <i class="fas fa-times cursor-pointer" onclick="cerrarModal('modal-historial')"></i>
+                </div>
+                <div class="flex-1 overflow-y-auto p-6 bg-gray-50">
+                    <div id="historial-timeline" class="relative flex flex-col gap-8"></div>
+                </div>
+                <div class="bg-gray-100 p-4 flex justify-center">
+                    <button onclick="cerrarModal('modal-historial')" class="bg-red-600 hover:bg-red-700 text-white font-bold uppercase py-2 px-8 rounded shadow text-xs transition-colors">
+                        Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+ <!-- Modal Detalle Estado de Cuenta -->
+    <div id="modal-estado-cuenta" class="modal-overlay">
+        <div class="modal-content" style="max-width:1050px;width:100%;">
+            <div class="bg-blue-800 text-white p-4 flex justify-between items-center">
+                <h4 class="font-bold uppercase tracking-wide">Detalle Estado de Cuenta</h4>
+                <i class="fas fa-times cursor-pointer" onclick="cerrarModal('modal-estado-cuenta')"></i>
+            </div>
+            <div class="p-8 text-center">
+                <img src="eecc.JPG" alt="Estado de Cuenta" >
+                
+            </div>
+            <div class="bg-gray-100 p-4 flex justify-center">
+                <button onclick="cerrarModal('modal-estado-cuenta')" class="bg-red-600 hover:bg-red-700 text-white font-bold uppercase py-2 px-8 rounded shadow text-xs transition-colors">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+     <!-- Modal Enviar Liquidación -->
+    <div id="modal-enviar-liquidacion" class="modal-overlay">
+        <div class="modal-content">
+            <div class="bg-green-700 text-white p-4 flex justify-between items-center">
+                <h4 class="font-bold uppercase tracking-wide">Enviar Liquidación</h4>
+                <i class="fas fa-times cursor-pointer" onclick="cerrarModal('modal-enviar-liquidacion')"></i>
+            </div>
+            <div class="p-6">
+                <div id="send-form">
+                    <label class="mb-2">Correo(s) de destino:</label>
+                    <input type="text" id="email-destinatario" placeholder="ejemplo@correo.com, otro@correo.com" class="input-email uppercase" autocomplete="off">
+                    <p class="text-[10px] text-gray-500 mt-2 italic">Separe los correos por comas si desea enviar a múltiples destinatarios.</p>
+                    
+                    <div class="mt-6 flex flex-col gap-2">
+                        <button onclick="simularEnvio()" class="bg-green-600 hover:bg-green-700 text-white font-bold uppercase py-2.5 rounded shadow text-xs transition-all flex items-center justify-center gap-2">
+                            <i class="fas fa-paper-plane"></i> Enviar Liquidación
+                        </button>
+                    </div>
+                </div>
+                <!-- Mensaje de éxito (oculto) -->
+                <div id="send-success" class="hidden py-10 text-center">
+                    <i class="fas fa-check-circle text-6xl text-green-500 mb-4 animate-bounce"></i>
+                    <h3 class="text-xl font-bold text-gray-800">¡Correo enviado con éxito!</h3>
+                </div>
+            </div>
+            <div class="bg-gray-100 p-4 flex justify-center">
+                <button onclick="cerrarModal('modal-enviar-liquidacion')" class="bg-red-600 hover:bg-red-700 text-white font-bold uppercase py-2 px-8 rounded shadow text-xs transition-colors">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- Modal Actualizar Liquidación -->
+    <div id="modal-actualizar-liquidacion" class="modal-overlay">
+        <div class="modal-content">
+            <div class="bg-purple-800 text-white p-4 flex justify-between items-center">
+                <h4 class="font-bold uppercase tracking-wide">Confirmar Actualización</h4>
+                <i class="fas fa-times cursor-pointer" onclick="cerrarModal('modal-actualizar-liquidacion')"></i>
+            </div>
+            <div class="p-8 text-center" id="update-confirm-view">
+                <div class="mb-4 text-purple-600">
+                    <i class="fas fa-sync-alt text-5xl"></i>
+                </div>
+                <h2 id="update-question" class="text-base font-bold text-gray-800 mb-2">
+                    ¿Desea actualizar la liquidación <span id="num-liq-display">0012-2026</span>?
+                </h2>
+                                
+                <div class="flex gap-4 justify-center">
+                    <button onclick="procesarActualizacion()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase py-2 px-10 rounded shadow text-xs transition-all">
+                        Sí
+                    </button>
+                    <button onclick="cerrarModal('modal-actualizar-liquidacion')" class="bg-gray-400 hover:bg-gray-500 text-white font-bold uppercase py-2 px-10 rounded shadow text-xs transition-all">
+                        No
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Vista de éxito tras actualización -->
+            <div class="p-10 text-center hidden" id="update-success-view">
+                <i class="fas fa-check-circle text-6xl text-green-500 mb-4"></i>
+                <h3 class="text-lg font-bold text-gray-800">Liquidación actualizada correctamente</h3>
+               
+            </div>
+
+            <div class="bg-gray-100 p-4 flex justify-center">
+                <button onclick="cerrarModal('modal-actualizar-liquidacion')" class="bg-red-600 hover:bg-red-700 text-white font-bold uppercase py-2 px-8 rounded shadow text-xs transition-colors">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- Modal Aprobar Liquidación -->
+            <div id="modal-aprobar-liquidacion" class="modal-overlay">
+                <div class="modal-content">
+                    <div class="bg-blue-800 text-white p-4 flex justify-between items-center">
+                        <h4 class="font-bold uppercase tracking-wide">Aprobar Liquidación</h4>
+                        <i class="fas fa-times cursor-pointer" onclick="cerrarModal('modal-aprobar-liquidacion')"></i>
+                    </div>
+                    <div class="p-8 text-center">
+                        <h2 class="font-bold text-lg mb-4">¿Desea Aprobar Liquidación?</h2>
+                        <div class="flex gap-4 justify-center">
+                            <button onclick="confirmarAprobarLiquidacion()" class="bg-green-600 hover:bg-green-700 text-white font-bold uppercase py-2 px-10 rounded shadow text-xs transition-all">SÍ</button>
+                            <button onclick="cerrarModal('modal-aprobar-liquidacion')" class="bg-gray-400 hover:bg-gray-500 text-white font-bold uppercase py-2 px-10 rounded shadow text-xs transition-all">NO</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+               
+    <!-- Modal Facturación Electrónica (GIF de Carga y Éxito) -->
+    <div id="modal-facturacion" class="modal-overlay">
+        <div class="modal-content">
+            <div class="bg-blue-900 text-white p-4 flex justify-between items-center">
+                <h4 class="font-bold uppercase tracking-wide">Facturación Electrónica</h4>
+                <i class="fas fa-times cursor-pointer" onclick="cerrarModal('modal-facturacion')"></i>
+            </div>
+            
+            <!-- Vista de Carga -->
+            <div id="factura-loading" class="p-12 text-center">
+                <div class="loader mb-6"></div>
+                <h3 class="text-lg font-bold text-gray-800 mb-2">Generando Factura Electrónica...</h3>
+                <p class="text-gray-500 text-xs uppercase tracking-widest">Comunicando con Servicios de SUNAT</p>
+            </div>
+
+            <!-- Vista de Éxito -->
+            <div id="factura-success" class="p-12 text-center hidden">
+                <i class="fas fa-check-circle text-7xl text-green-500 mb-4 animate-bounce"></i>
+                <h3 class="text-xl font-bold text-gray-800 mb-1">¡Generación Exitosa!</h3>
+                <p class="text-gray-600 text-sm">El comprobante ha sido validado y registrado.</p>
+                <div class="mt-4 p-3 bg-gray-50 border border-dashed border-gray-300 rounded">
+                    <span class="text-[10px] text-gray-400 block uppercase">Nro. de Factura Generado:</span>
+                    <span id="factura-generada-num" class="text-lg font-black text-blue-700"></span>
+                </div>
+            </div>
+
+            <div class="bg-gray-100 p-4 flex justify-center">
+                <button onclick="cerrarModal('modal-facturacion')" class="bg-gray-800 hover:bg-black text-white font-bold uppercase py-2 px-8 rounded shadow text-xs transition-colors">
+                    Entendido
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Registrar Pago -->
+    <div id="modal-registrar-pago" class="modal-overlay">
+        <div class="modal-content" style="max-width:600px;width:100%;">
+            <div class="bg-emerald-700 text-white p-4 flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-cash-register"></i>
+                    <h4 class="font-bold uppercase tracking-wide">Registrar Pago del Cliente</h4>
+                </div>
+                <i class="fas fa-times cursor-pointer" onclick="cerrarModal('modal-registrar-pago')"></i>
+            </div>
+            
+            <div class="p-6">
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="col-span-2 p-3 bg-blue-50 border border-blue-200 rounded flex justify-between items-center">
+                        <div>
+                            <span class="block text-[10px] text-blue-600 font-bold uppercase">Empresa:</span>
+                            <span id="pago-empresa-name" class="text-sm font-bold text-gray-800 italic"></span>
+                        </div>
+                        <div class="text-right">
+                            <span class="block text-[10px] text-blue-600 font-bold uppercase">Deuda Total:</span>
+                            <span id="pago-monto-total" class="text-lg font-black text-gray-900"></span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label>Forma de Pago</label>
+                        <select id="pago-forma" class="input-select">
+                            <option value="TRANSFERENCIA">TRANSFERENCIA BANCARIA</option>
+                            <option value="DEPOSITO">DEPÓSITO EN CUENTA</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label>Banco</label>
+                        <select id="pago-banco" class="input-select">
+                            <option value="BCP">BCP - BANCO DE CRÉDITO</option>
+                            <option value="BBVA">BBVA CONTINENTAL</option>
+                            <option value="SCOTIABANK">SCOTIABANK</option>
+                            <option value="INTERBANK">INTERBANK</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Numero Operacion</label>
+                        <input type="text" id="nro-operacion" class="input-form" placeholder="N° de operación bancaria">
+                    </div>
+                    <div>
+                        <label>Fecha Operacion</label>
+                        <input type="date" id="fecha-pago" class="input-form">
+                    </div>
+                    <div>
+                        <label>Monto a Abonar (S/)</label>
+                        <input type="number" id="pago-monto-input" class="input-form font-bold text-blue-700" style="width: 100px;" placeholder="0.00">
+                    </div>
+                    <div>
+                        <label>Enviar a sistema contable <input type="checkbox" id="pago-enviar-contable"> </label>
+                        <button onclick="guardarPago()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold uppercase py-1 rounded shadow-lg text-xs transition-all" style="margin-top: 6px;width: 150px;">
+                        Guardar Pago
+                    </button>
+
+                    </div>
+                    <div class="col-span-2 overflow-x-auto">
+                        <table class="min-w-full w-full text-[10px] text-left border-collapse border border-gray-400" style="table-layout: fixed;">
+                                <thead class="bg-gray-100 font-bold uppercase text-gray-600">
+                                    <tr>
+                                        <th class="p-2 border border-gray-300">FORMA DE PAGO</th>
+                                        <th class="p-2 border border-gray-300">BANCO</th>
+                                        <th class="p-2 border border-gray-300">NRO OPERACION</th>
+                                        <th class="p-2 border border-gray-300">FECHA OPERACION</th>
+                                        <th class="p-2 border border-gray-300">MONTO TOTAL</th>
+                                        <th class="p-2 border border-gray-300">MONTO PAGADO</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                        
+                                        <tr class="font-bold bg-gray-100 font-bold uppercase text-gray-600">
+                                            <td colspan="4">
+                                            </td>
+                                            <td>
+                                                    MONTO PAGADO:<br>
+                                                    MONTO PENDIENTE<br>
+                                                    MONTO TOTAL:
+                                            </td>
+                                            <td class="text-right font-bold">
+                                                    <span id="t_monto_pagado"></span><br>
+                                                    0.00<br>
+                                                    <span id="t_monto_total"></span>
+                                            </td>
+                                        </tr>
+                                </tbody>
+
+                        </table>
+                    </div>
+                </div>
+
+                <div class="flex gap-3 justify-center">
+                    
+                    <button onclick="cerrarModal('modal-registrar-pago')" class="bg-red-600 hover:bg-red-700 text-white font-bold uppercase py-2 px-8 rounded shadow text-xs transition-colors">
+                        Cerrar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Detalle Notas de Crédito/Débito -->
+    <div id="modal-detalle-notas" class="modal-overlay">
+        <div class="modal-content" style="max-width:600px;width:100%;">
+            <div class="bg-blue-800 text-white p-4 flex justify-between items-center">
+                <h4 id="titulo-detalle-notas" class="font-bold uppercase tracking-wide">Detalle Notas</h4>
+                <i class="fas fa-times cursor-pointer" onclick="cerrarModal('modal-detalle-notas')"></i>
+            </div>
+            <div class="p-4" id="contenido-detalle-notas">
+                <!-- Aquí se renderiza la tabla de detalle de notas -->
+            </div>
+            <div class="bg-gray-100 p-4 flex justify-center">
+                <button onclick="cerrarModal('modal-detalle-notas')" class="bg-red-600 hover:bg-red-700 text-white font-bold uppercase py-2 px-8 rounded shadow text-xs transition-colors">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- Modales adicionales (Simplificados para brevedad) -->
+    <div id="modal-actualizar-liquidacion" class="modal-overlay">
+        <div class="modal-content">
+            <div class="bg-purple-800 text-white p-4 flex justify-between items-center"><h4 class="font-bold uppercase">Actualizar</h4><i class="fas fa-times cursor-pointer" onclick="cerrarModal('modal-actualizar-liquidacion')"></i></div>
+            <div class="p-8 text-center">
+                <h2 class="font-bold text-lg mb-2">¿Desea actualizar la liquidación <span id="num-liq-display"></span>?</h2>
+                <p class="text-red-600 font-bold mb-4 italic">Se generará un nuevo número</p>
+                <div class="flex gap-2 justify-center"><button onclick="cerrarModal('modal-actualizar-liquidacion')" class="bg-blue-600 text-white px-6 py-2 rounded">SÍ</button><button onclick="cerrarModal('modal-actualizar-liquidacion')" class="bg-gray-400 text-white px-6 py-2 rounded">NO</button></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast de Descarga -->
+    <div id="download-toast">
+        <i class="fas fa-file-excel text-green-400"></i>
+        <span>Generando excel EPS_PLAN_BASE...</span>
+    </div>
+
+
+
+<!-- OTROS MODALES -->
+<!-- Modal Forma de Pago -->
+    <div id="modal-forma-pago" class="modal-overlay">
+        <div class="modal-content" style="max-width:650px;width:100%;">
+            <div class="bg-blue-800 text-white p-4 flex justify-between items-center">
+                <span id="modal-title" class="uppercase font-bold">DETALLE DE PAGO</span>
+                <button onclick="closeFormaPagoModal()" class="text-white hover:text-gray-200 text-xl font-bold">&times;</button>
+            </div>
+            <div id="modal-forma-pago-info" class="text-[10px] font-bold flex gap-10 mb-3 px-2">
+                <!-- Example: CUOTA: 1  FECHA DE EMISION: 01/03/2026 ... -->
+            </div>
+            <div class="p-4">
+                <!-- Banner Info -->
+                <div class="text-[10px] font-bold text-gray-700 mb-4 bg-blue-50 p-2 flex justify-between uppercase border-b border-blue-200">
+                    <div id="modal-header-banner" class="flex gap-6">
+                        <!-- Filled by JS -->
+                        NRO CONTRATO: 1000005 | PRODUCTO: EPS | CUOTA: MARZO 2026 | FECHA PAGO: 31/03/2026
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-[10px] text-left border-collapse border border-gray-300">
+                        <thead class="bg-gray-100 font-bold uppercase text-gray-600">
+                            <tr>
+                                <th class="p-2 border border-gray-300">FORMA DE PAGO</th>
+                                <th class="p-2 border border-gray-300">BANCO</th>
+                                <th class="p-2 border border-gray-300">NRO OPERACION</th>
+                                <th class="p-2 border border-gray-300">FECHA OPERACION</th>
+                                <th class="p-2 border border-gray-300">MONTO TOTAL</th>
+                                <th class="p-2 border border-gray-300">MONTO PAGADO</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>DEPOSITO</td>
+                                <td>BCP</td>
+                                <td>1234567890</td>
+                                <td>31/03/2026</td>
+                                <td class="text-right" id="monto_total"></td>
+                                <td class="text-right" id="monto_pagado"></td>
+                            </tr>
+                            <tr class="font-bold bg-gray-100 font-bold uppercase text-gray-600">
+                                <td colspan="4"></td>
+                                <td>
+                                    MONTO PAGADO:<br>
+                                    MONTO PENDIENTE<br>
+                                    MONTO TOTAL:
+                                </td>
+                                <td class="text-right font-bold">
+                                    <span id="d_monto_pagado"></span><br>
+                                    <span id="d_monto_pendiente"></span><br>
+                                    <span id="d_monto_total"></span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-6 flex justify-center">
+                    <button onclick="closeFormaPagoModal()" class="bg-red-700 text-white font-bold uppercase px-24 py-2 rounded-sm text-xs shadow-md hover:bg-red-800">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal Factura (Unificado estilo) -->
+    <div id="modal-comprobante" class="modal-overlay">
+        <div class="modal-content" style="max-width:500px;width:100%;">
+            <div class="bg-blue-800 text-white p-4 flex justify-between items-center">
+                <span class="uppercase font-bold">COMPROBANTE <span id="num_factura"></span></span>
+                <button onclick="closeComprobanteModal()" class="text-white hover:text-gray-200 text-xl font-bold">&times;</button>
+            </div>
+            <div class="p-4">
+                <div id="contenido-comprobante">
+                    <!-- ...contenido original aquí... -->
+                    <div class="text-[10px] font-bold text-gray-700 mb-4 bg-blue-50 p-2 flex justify-between uppercase border-b border-blue-200">
+                        <div id="modal-header-banner" class="flex gap-6">
+                            <button class="bg-red-700 text-white px-3 py-1 rounded text-[10px] font-bold uppercase flex items-center gap-1"><i class="fas fa-file-pdf"></i> PDF</button>
+                            <button class="bg-orange-500 text-white px-3 py-1 rounded text-[10px] font-bold uppercase flex items-center gap-1"><i class="fas fa-print"></i> Imprimir</button>
+                            <button class="bg-green-600 text-white px-3 py-1 rounded text-[10px] font-bold uppercase flex items-center gap-1"><i class="fas fa-download"></i> Descargar</button>
+                            <button class="bg-blue-600 text-white px-3 py-1 rounded text-[10px] font-bold uppercase flex items-center gap-1" id="btn-mostrar-form-correo" onclick="mostrarFormCorreo(event)"><i class="fas fa-mail-forward"></i> Enviar</button>
+                            <!-- Modal de envío de correo -->
+                            <div id="modal-envio-correo" class="modal-overlay" style="z-index: 200; display: none;">
+                                <div class="modal-content" style="max-width: 350px; width: 96%;">
+                                    <div class="bg-blue-800 text-white p-2 flex justify-between items-center">
+                                        <span class="uppercase text-[12px]">Enviar comprobante por correo</span>
+                                        <button onclick="cerrarModalCorreo()" class="text-white hover:text-gray-200 text-xl font-bold">&times;</button>
+                                    </div>
+                                    <div class="p-4">
+                                        <form onsubmit="enviarCorreo(event)">
+                                            <label class="block text-[10px] font-bold mb-1">Correo(s) de destino:</label>
+                                            <input type="text" id="input-correos" class="w-full border border-gray-300 rounded px-2 py-1 text-[11px] mb-2" placeholder="Ingrese uno o más correos separados por coma">
+                                            <button type="submit" class="bg-blue-600 text-white px-3 py-1 rounded text-[10px] font-bold uppercase mt-1 w-full">Enviar Correo</button>
+                                            <div id="mensaje-exito-correo" class="hidden mt-2 text-green-700 text-[11px] font-bold"></div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <script>
+                            // --- Modal de envío de correo ---
+                            function mostrarFormCorreo(e) {
+                                e.preventDefault();
+                                document.getElementById('modal-envio-correo').style.display = 'flex';
+                                document.getElementById('input-correos').value = '';
+                                document.getElementById('mensaje-exito-correo').classList.add('hidden');
+                            }
+
+                            function cerrarModalCorreo() {
+                                document.getElementById('modal-envio-correo').style.display = 'none';
+                            }
+
+                            function enviarCorreo(e) {
+                                e.preventDefault();
+                                const input = document.getElementById('input-correos');
+                                const correos = input.value.split(',').map(c => c.trim()).filter(c => c.length > 0);
+                                const msg = document.getElementById('mensaje-exito-correo');
+                                if (correos.length === 0) {
+                                    msg.textContent = 'Ingrese al menos un correo válido.';
+                                    msg.classList.remove('text-green-700');
+                                    msg.classList.add('text-red-700');
+                                    msg.classList.remove('hidden');
+                                    return;
+                                }
+                                // Simulación de envío
+                                msg.textContent = '¡Correo enviado exitosamente a: ' + correos.join(', ') + '!';
+                                msg.classList.remove('text-red-700');
+                                msg.classList.add('text-green-700');
+                                msg.classList.remove('hidden');
+                                setTimeout(() => {
+                                    cerrarModalCorreo();
+                                }, 1200);
+                            }
+                            // Cerrar modal al hacer click fuera
+                            window.addEventListener('click', function(event) {
+                                const modal = document.getElementById('modal-envio-correo');
+                                if (modal.style.display === 'flex' && event.target === modal) {
+                                    cerrarModalCorreo();
+                                }
+                            });
+                        </script>
+                    <div class="overflow-x-auto">
+                        <img src="factura.JPG" alt="Imagen Factura" class="w-full max-w-md h-auto mx-auto rounded shadow object-contain">
+                    </div>
+                    <div>
+                    </div>
+                    <div class="mt-6 flex justify-center">
+                        <button onclick="closeComprobanteModal()" class="bg-red-700 text-white font-bold uppercase px-24 py-2 rounded-sm text-xs shadow-md hover:bg-red-800">Cerrar</button>
+                    </div>
+                </div>
+              
+                        </div>
+        </div>
+    </div>
+    <!-- Modal Detalle Afiliados Actualización -->
+    <div id="modal-afiliados-actualizacion" class="modal-overlay">
+        <div class="modal-content" style="max-width:400px;width:100%;">
+            <div class="bg-purple-800 text-white p-4 flex justify-between items-center">
+                <h4 class="font-bold uppercase tracking-wide">Detalle de Afiliados</h4>
+                <i class="fas fa-times cursor-pointer" onclick="cerrarModal('modal-afiliados-actualizacion')"></i>
+            </div>
+            <div class="p-6 text-xs">
+                <div class="mb-3 font-bold text-gray-700">Afiliados Alta:</div>
+                <ul id="afiliados-agregados" class="mb-4 list-disc list-inside text-green-700"></ul>
+                <div class="mb-3 font-bold text-gray-700">Afiliados Baja:</div>
+                <ul id="afiliados-quitados" class="list-disc list-inside text-red-700"></ul>
+            </div>
+            <div class="bg-gray-100 p-4 flex justify-center">
+                <button onclick="cerrarModal('modal-afiliados-actualizacion')" class="bg-red-600 hover:bg-red-700 text-white font-bold uppercase py-2 px-8 rounded shadow text-xs transition-colors">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+  
+   <script>
+                
+                // --- Opciones de motivo dinámicas ---
+                const motivosCredito = [
+                    { value: '01', label: '01 → Anulación de la operación' },
+                    { value: '02', label: '02 → Anulación por error en el RUC' },
+                    { value: '03', label: '03 → Corrección por error en descripción' },
+                    { value: '07', label: '07 → Devolución de mercadería' },
+                    { value: '08', label: '08 → Bonificación' },
+                    { value: '09', label: '09 → Disminución en el valor' },
+                    { value: '10', label: '10 → Otros conceptos' }
+                ];
+                const motivosDebito = [
+                    { value: '01', label: '01 → Intereses por mora' },
+                    { value: '02', label: '02 → Aumento en el valor' },
+                    { value: '03', label: '03 → Penalidades / otros cargos' }
+                ];
+
+                function actualizarOpcionesMotivo() {
+                    const tipo = document.getElementById('tipo-nota').value;
+                    const motivoSelect = document.getElementById('motivo-nota');
+                    motivoSelect.innerHTML = '';
+                    let motivos = tipo === 'credito' ? motivosCredito : motivosDebito;
+                    motivos.forEach(m => {
+                        const opt = document.createElement('option');
+                        opt.value = m.value;
+                        opt.textContent = m.label;
+                        motivoSelect.appendChild(opt);
+                    });
+                    mostrarCampoOtroMotivo();
+                }
+
+                function mostrarCampoOtroMotivo() {
+                    const tipo = document.getElementById('tipo-nota').value;
+                    const motivo = document.getElementById('motivo-nota').value;
+                    const campo = document.getElementById('campo-otro-motivo');
+                    if ((tipo === 'credito' && motivo === '10') || (tipo === 'debito' && motivo === '03')) {
+                        campo.style.display = '';
+                    } else {
+                        campo.style.display = 'none';
+                    }
+                }
+
+                // --- Lógica de grilla y formulario ---
+                window.notasRegistradas = window.notasRegistradas || [];
+                let contadorNotas = 1;
+                function guardarNota(e) {
+                    e.preventDefault();
+                    const tipo = document.getElementById('tipo-nota').value;
+                    const factura = document.getElementById('factura-referencia').value;
+                    const motivo = document.getElementById('motivo-nota').value;
+                    const motivoLabel = document.getElementById('motivo-nota').selectedOptions[0].textContent;
+                    const detalleOtro = document.getElementById('detalle-otro-motivo').value;
+                    const monto = parseFloat(document.getElementById('monto-nota').value).toFixed(2);
+                    let motivoFinal = motivoLabel;
+                    if ((tipo === 'credito' && motivo === '10') || (tipo === 'debito' && motivo === '03')) {
+                        motivoFinal += detalleOtro ? (': ' + detalleOtro) : '';
+                    }
+                    const nota = {
+                        numero: (tipo === 'credito' ? 'NC' : 'ND') + String(contadorNotas).padStart(5, '0'),
+                        tipo: tipo === 'credito' ? 'Crédito' : 'Débito',
+                        factura,
+                        motivo: motivoFinal,
+                        monto
+                    };
+                    window.notasRegistradas.push(nota);
+                    contadorNotas++;
+                    renderGrillaNotas();
+                    document.getElementById('form-nota').reset();
+                    document.getElementById('factura-referencia').value=factura;
+                    actualizarOpcionesMotivo();
+                    mostrarCampoOtroMotivo();
+                    // Refrescar la grilla principal para actualizar sumatorias
+                    filtrarCobranza();
+                }
+                function renderGrillaNotas() {
+                    const tbody = document.getElementById('grilla-notas');
+                    tbody.innerHTML = (window.notasRegistradas || []).map(n => `
+                        <tr>
+                            <td class="p-2 border border-gray-300">${n.numero}</td>
+                            <td class="p-2 border border-gray-300">${n.tipo}</td>
+                            <td class="p-2 border border-gray-300">${n.factura}</td>
+                            <td class="p-2 border border-gray-300">${n.motivo}</td>
+                            <td class="p-2 border border-gray-300 text-right">${n.monto}</td>
+                        </tr>
+                    `).join('');
+                }
+
+                // --- Inicialización ---
+                document.addEventListener('DOMContentLoaded', function() {
+                    window.notasRegistradas = window.notasRegistradas || [];
+                    actualizarOpcionesMotivo();
+                    renderGrillaNotas();
+                    filtrarCobranza();
+                    // Si hay un número de factura seleccionado, ponerlo como referencia
+                    const ref = document.getElementById('num_factura');
+                    if (ref) {
+                        document.getElementById('factura-referencia').value = ref.textContent;
+                    }
+                });
+                // Si se abre el modal, actualizar la referencia
+                function setFacturaReferencia(num) {
+                    document.getElementById('factura-referencia').value = num;
+                }
+                </script>
+
+                <script>
+                // --- MODAL NOTAS ---
+                function abrirNotasModal(facturaNum) {
+                    // Asignar el número de factura al campo de referencia
+                    if (facturaNum) {
+                        document.getElementById('factura-referencia').value = facturaNum;
+                    }
+                    document.getElementById('modal-notas').style.display = 'flex';
+                }
+                // Al cerrar el modal, oculta el contenido
+                function cerrarModalNotas() {
+                    var contenido = document.getElementById('contenido-nota');
+                    if (contenido) contenido.style.display = 'none';
+                    document.getElementById('modal-notas').style.display = 'none';
+                }
+                // Sobrescribe cerrarModal para el modal de notas
+                const _oldCerrarModal = window.cerrarModal;
+                window.cerrarModal = function(id) {
+                    if (id === 'modal-notas') {
+                        cerrarModalNotas();
+                        return;
+                    }
+                    _oldCerrarModal(id);
+                }
+    </script>
+
+    <script>
+    // --- TRACKING HISTORIAL ---
+    let historialTracking = [
+        
+        {
+            accion: 'Descargar detalle',
+            fecha: '2026-03-12 09:18:10',
+            usuario: 'Ejecutivo'
+        },
+        {
+            accion: 'Actualizar liquidación',
+            fecha: '2026-03-11 10:05:44',
+            usuario: 'Ejecutivo'
+        },
+        {
+            accion: 'Facturar liquidación',
+            fecha: '2026-03-10 11:22:01',
+            usuario: 'Ejecutivo'
+        },
+        {
+            accion: 'Registrar pago',
+            fecha: '2026-03-09 12:30:55',
+            usuario: 'Ejecutivo'
+        },
+        {
+            accion: 'Enviar liquidación',
+            fecha: '2026-03-13 09:15:22',
+            usuario: 'Ejecutivo',
+            correos: ['cliente1@correo.com', 'cliente2@correo.com']
+        }
+    ];
+
+    function iconoAccionHistorial(accion) {
+        switch(accion) {
+            case 'Enviar liquidación': return '<i class="fas fa-paper-plane text-green-600 bg-green-100 rounded-full p-2"></i>';
+            case 'Descargar detalle': return '<i class="fas fa-download text-orange-500 bg-orange-100 rounded-full p-2"></i>';
+            case 'Actualizar liquidación': return '<i class="fas fa-sync-alt text-purple-600 bg-purple-100 rounded-full p-2"></i>';
+            case 'Registrar pago': return '<i class="fas fa-cash-register text-emerald-600 bg-emerald-100 rounded-full p-2"></i>';
+            case 'Facturar liquidación': return '<i class="fas fa-file-invoice-dollar text-blue-700 bg-blue-100 rounded-full p-2"></i>';
+           
+            default: return '<i class="fas fa-info-circle text-gray-400"></i>';
+        }
+    }
+
+    function renderHistorialTimeline() {
+        const cont = document.getElementById('historial-timeline');
+        if (!cont) return;
+        cont.innerHTML = historialTracking
+            .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+            .map((item, idx) => {
+                let detalleExtra = '';
+                if (item.accion === 'Enviar liquidación' && item.correos) {
+                    detalleExtra = `<div class=\"text-[11px] text-blue-700 font-semibold\">Enviado a: <span class=\"font-normal\">${item.correos.join(', ')}</span></div>`;
+                }
+                if (item.accion === 'Actualizar liquidación') {
+                    detalleExtra = `<button onclick=\"mostrarAfiliadosActualizacion(${idx})\" class=\"mt-1 bg-purple-100 text-purple-800 px-2 py-1 rounded text-[10px] font-bold hover:bg-purple-200 transition\">Ver afiliados agregados/quitados</button>`;
+                }
+                return `
+                <div class=\"flex items-start gap-4 relative\">
+                    <div class=\"flex flex-col items-center\">
+                        <span class=\"z-10\">${iconoAccionHistorial(item.accion)}</span>
+                        ${idx < historialTracking.length - 1 ? '<span class=\"w-1 h-12 bg-gray-300 block mt-1\"></span>' : ''}
+                    </div>
+                    <div class=\"flex-1\">
+                        <div class=\"font-bold text-xs text-gray-700\">${item.accion}</div>
+                        <div class=\"text-[11px] text-gray-500 mb-1\">${item.fecha} &bull; <span class=\"font-semibold text-gray-600\">${item.usuario}</span></div>
+                        ${detalleExtra}
+                    </div>
+                </div>
+                `;
+            }).join('');
+    }
+// Simulación de afiliados agregados/quitados para cada actualización (por idx)
+const afiliadosActualizacionEjemplo = [
+    // Primeros registros no son actualización
+    null,
+    null,
+    { agregados: ['Luis Torres', 'Ana Salazar'], quitados: ['Carlos Ramos'] },
+    null,
+    null
+];
+
+function mostrarAfiliadosActualizacion(idx) {
+    // Buscar el registro real si se agregan más
+    let data = afiliadosActualizacionEjemplo[idx] || {agregados:[], quitados:[]};
+    // Si el historialTracking[idx] tiene datos reales, usarlos
+    if (historialTracking[idx] && historialTracking[idx].afiliados) {
+        data = historialTracking[idx].afiliados;
+    }
+    const ulAgregados = document.getElementById('afiliados-agregados');
+    const ulQuitados = document.getElementById('afiliados-quitados');
+    ulAgregados.innerHTML = data.agregados && data.agregados.length ? data.agregados.map(a=>`<li>${a}</li>`).join('') : '<li class="text-gray-400">Ninguno</li>';
+    ulQuitados.innerHTML = data.quitados && data.quitados.length ? data.quitados.map(a=>`<li>${a}</li>`).join('') : '<li class="text-gray-400">Ninguno</li>';
+    document.getElementById('modal-afiliados-actualizacion').style.display = 'flex';
+}
+
+    // --- REGISTRO DE ACCIONES EN TRACKING ---
+    function registrarTracking(accion, extra = {}) {
+        const now = new Date();
+        const fecha = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0') + ' '
+            + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ':' + String(now.getSeconds()).padStart(2,'0');
+        let entry = { accion, fecha, usuario: 'Ejecutivo', ...extra };
+        // Si es actualización y no se pasan afiliados, simular
+        if (accion === 'Actualizar liquidación' && !entry.afiliados) {
+            entry.afiliados = { agregados: ['Juan Pérez'], quitados: ['María López'] };
+        }
+        historialTracking.push(entry);
+    }
+
+    // Integrar tracking en acciones reales
+    const _oldSimularEnvio = window.simularEnvio;
+    window.simularEnvio = function() {
+        const emailInput = document.getElementById('email-destinatario');
+        if (!emailInput.value.trim()) {
+            emailInput.focus();
+            emailInput.classList.add('border-red-500');
+            return;
+        }
+        emailInput.classList.remove('border-red-500');
+        registrarTracking('Enviar liquidación', { correos: emailInput.value.split(',').map(c=>c.trim()).filter(c=>c) });
+        _oldSimularEnvio();
+    };
+
+    const _oldSimularDescargaExcel = window.simularDescargaExcel;
+    window.simularDescargaExcel = function() {
+        registrarTracking('Descargar detalle');
+        _oldSimularDescargaExcel();
+    };
+
+    const _oldProcesarActualizacion = window.procesarActualizacion;
+    window.procesarActualizacion = function() {
+        registrarTracking('Actualizar liquidación');
+        _oldProcesarActualizacion();
+    };
+
+    const _oldAbrirFacturarLiquidacion = window.abrirFacturarLiquidacion;
+    window.abrirFacturarLiquidacion = function() {
+        registrarTracking('Facturar liquidación');
+        _oldAbrirFacturarLiquidacion();
+    };
+
+    const _oldGuardarPago = window.guardarPago;
+    window.guardarPago = function() {
+        registrarTracking('Registrar pago');
+        _oldGuardarPago();
+    };
+    </script>
+
+
+
+
+<script>
+    
+    function abrirHistorial() {
+        closeDropdown();
+        renderHistorialTimeline();
+        document.getElementById('modal-historial').style.display = 'flex';
+    }
+
+ // --- Aprobar Liquidación ---
+                function abrirAprobarFacturar() {
+                    closeDropdown();
+                    document.getElementById('modal-aprobar-liquidacion').style.display = 'flex';
+                }
+
+                function confirmarAprobarLiquidacion() {
+                    if (selectedRowId == null) return;
+                    const row = cobranzaData.find(d => d.id === selectedRowId);
+                    if (row) {
+                        row.estado = "APROBADO";
+                        filtrarCobranza();
+                    }
+                    cerrarModal('modal-aprobar-liquidacion');
+                }
+ // --- Factura Modal ---
+            function openComprobanteModal(facturaNum) {
+                
+                document.getElementById('modal-comprobante').style.display = 'flex';
+
+                document.getElementById('num_factura').innerHTML = facturaNum;
+
+                
+            }
+             function closeComprobanteModal() {
+                document.getElementById('modal-comprobante').style.display = 'none';
+            }
+
+ // --- Forma de pago Modal ---
+
+            function openFormaPagoModal(monto, id) {
+                // Permitir pasar el id explícitamente para obtener el estado correcto
+                let row = null;
+                if (typeof id !== 'undefined') {
+                    row = cobranzaData.find(d => d.id === id);
+                    selectedRowId = id;
+                } else if (typeof selectedRowId !== 'undefined' && selectedRowId !== null) {
+                    row = cobranzaData.find(d => d.id === selectedRowId);
+                }
+                let estado = row ? row.estado : null;
+               // alert(estado ? `Estado: ${estado}` : 'Estado no disponible');
+
+                document.getElementById('modal-forma-pago').style.display = 'flex';
+                document.getElementById('monto_total').innerHTML = `${monto || '0.00'}`;
+                document.getElementById('monto_pagado').innerHTML = `${monto || '0.00'}`;
+
+                if (estado === 'PAGADO') {
+                    document.getElementById('d_monto_pagado').innerHTML = `${monto || '0.00'}`;
+                    document.getElementById('d_monto_pendiente').innerHTML = `0.00`;
+                    document.getElementById('d_monto_total').innerHTML = `${monto || '0.00'}`;
+                    return;
+                }
+                if (estado === 'PAGADO_PARCIALMENTE') {
+                    // Simulación: Si es pagado parcialmente, asumimos que se ha pagado la mitad
+                    const pagado = monto ? (monto / 2).toFixed(2) : '0.00';
+                    const pendiente = monto ? (monto - pagado).toFixed(2) : '0.00';
+                    document.getElementById('d_monto_pagado').innerHTML = `${pagado}`;
+                    document.getElementById('d_monto_pendiente').innerHTML = `${pendiente}`;
+                    document.getElementById('d_monto_total').innerHTML = `${monto.toFixed(2) || '0.00'}`;
+                    return;
+                }
+
+
+            }
+
+            function closeFormaPagoModal() {
+                document.getElementById('modal-forma-pago').style.display = 'none';
+            }
+
+
+
+        let selectedRowId = null;
+        let cobranzaData = [
+            { id: 1, contrato: "20000001", liquidacion: "000021-2026", empresa: "COMPAÑIA DE GAS S.A.C.", producto: "EPS", estado: "PAGADO", formaPago: "<i class='far fa-file-alt text-lg text-gray-600' onclick='openFormaPagoModal(2950)'></i>", mes: "03", anio: "2026", factura: "<a onclick='openComprobanteModal(\"FE01-0004512\")'>FE01-0004512</a>", notasCredito: "",notasDebito: "", total: 2950.00 },
+            { id: 2, contrato: "10000005", liquidacion: "000011-2026", empresa: "ALCARRAZ EDIFICACIONES EIRL", producto: "EPS", estado: "PENDIENTE", formaPago: "", mes: "03", anio: "2026", factura: "", notasCredito: "",notasDebito: "", total: 1093.86 },
+            { id: 3, contrato: "10000005", liquidacion: "000012-2026", empresa: "ALCARRAZ EDIFICACIONES EIRL", producto: "EPS", estado: "PENDIENTE", formaPago: "", mes: "03", anio: "2026", factura: "", notasCredito: "",notasDebito: "", total: 364.62 },
+            { id: 4, contrato: "30000001", liquidacion: "000030-2026", empresa: "SERVICIOS LOGISTICOS SAC", producto: "EPS", estado: "APROBADO", formaPago: "", mes: "03", anio: "2026", factura: "", notasCredito: "",notasDebito: "", total: 236.00 },
+            { id: 5, contrato: "20000002", liquidacion: "000022-2026", empresa: "COMPAÑIA DE GAS S.A.C.", producto: "EPS", estado: "PAGADO_PARCIALMENTE", formaPago: "<i class='far fa-file-alt text-lg text-gray-600' onclick='openFormaPagoModal(590)'></i>", mes: "03", anio: "2026", factura: "<a onclick='openComprobanteModal(\"FE01-0004599\")'>FE01-0004599</a>", notasCredito: "",notasDebito: "", total: 590.00 },
+            { id: 6, contrato: "30000050", liquidacion: "000080-2026", empresa: "INDUSTRIAS PERU SAC", producto: "EPS", estado: "FACTURADO", formaPago: "", mes: "03", anio: "2026", factura: "<a onclick='openComprobanteModal(\"FE01-0004605\")'>FE01-0004605</a>", notasCredito: "",notasDebito: "", total: 9236.00 },
+        ];
+
+        function showDropdown(event, id) {
+            event.stopPropagation();
+            selectedRowId = id;
+            const btn = event.currentTarget;
+            const menu = document.getElementById('floating-dropdown');
+
+            // Obtener la fila de cobranza correspondiente
+            const row = cobranzaData.find(d => d.id === id);
+            let facturaNum = null;
+            if (row && row.factura) {
+                // Si la factura es un enlace HTML, extraer el texto
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = row.factura;
+                const link = tempDiv.querySelector('a');
+                facturaNum = link ? link.textContent.trim() : row.factura.trim();
+            }
+            // Si la factura es '-' o vacía, ocultar la opción
+            if (!facturaNum || facturaNum === '-') {
+                mostrarOpcionNotas(null);
+            } else {
+                mostrarOpcionNotas(facturaNum);
+            }
+
+            // Mostrar/ocultar la opción de facturar según el estado de LQ
+            var opcionFacturar = document.getElementById('opcion-facturar');
+            if (row && row.estado === 'APROBADO') {
+                opcionFacturar.style.display = '';
+                opcionFacturar.onclick = function() { abrirFacturarLiquidacion(); };
+            } else {
+                opcionFacturar.style.display = 'none';
+                opcionFacturar.onclick = null;
+            }
+
+            // Mostrar/ocultar la opción de registrar pago solo si el estado es FACTURADO o PAGADO_PARCIALMENTE
+            var opcionRegistrarPago = document.getElementById('opcion-registrar-pago');
+            if (row && (row.estado === 'FACTURADO' || row.estado === 'PAGADO_PARCIALMENTE')) {
+                opcionRegistrarPago.style.display = '';
+                opcionRegistrarPago.onclick = function() { abrirRegistrarPago(); };
+            } else {
+                opcionRegistrarPago.style.display = 'none';
+                opcionRegistrarPago.onclick = null;
+            }
+
+            closeDropdown();
+            btn.classList.add('active');
+            const rect = btn.getBoundingClientRect();
+            menu.style.top = (rect.bottom + 5) + 'px';
+            menu.style.left = rect.left + 'px';
+            menu.style.display = 'block';
+        }
+
+        function closeDropdown() {
+            document.getElementById('floating-dropdown').style.display = 'none';
+            document.querySelectorAll('.btn-opciones').forEach(b => b.classList.remove('active'));
+        }
+
+        function cerrarModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        function simularEnvio() {
+            const emailInput = document.getElementById('email-destinatario');
+            if (!emailInput.value.trim()) {
+                emailInput.focus();
+                emailInput.classList.add('border-red-500');
+                return;
+            }
+            emailInput.classList.remove('border-red-500');
+
+            document.getElementById('send-form').classList.add('hidden');
+            document.getElementById('send-success').classList.remove('hidden');
+
+            setTimeout(() => {
+                cerrarModal('modal-enviar-liquidacion');
+            }, 2000);
+        }
+
+
+        function abrirEstadoCuenta() { closeDropdown(); document.getElementById('modal-estado-cuenta').style.display = 'flex'; }
+        
+        function abrirFacturarLiquidacion() {
+            closeDropdown();
+            const row = cobranzaData.find(d => d.id === selectedRowId);
+            if (!row) return;
+            if (row.estado === "PAGADO" || row.estado === "FACTURADO") {
+                alert("Este registro ya se encuentra pagado y facturado.");
+                return;
+            }
+
+            // Resetear Modal de Facturación Electrónica
+            document.getElementById('factura-loading').classList.remove('hidden');
+            document.getElementById('factura-success').classList.add('hidden');
+            document.getElementById('modal-facturacion').style.display = 'flex';
+
+            // Simular Proceso de 2 segundos
+            setTimeout(() => {
+                // Generar número de factura aleatorio
+                const correlativo = Math.floor(Math.random() * 90000) + 10000;
+                const serieFactura = `FE01-00${correlativo}`;
+
+                // Actualizar Data
+                row.factura = `<a onclick='openComprobanteModal(\"${serieFactura}\")'>${serieFactura}</a>`;
+                row.formaPago = "<i class='far fa-file-alt text-lg text-gray-600' onclick='openFormaPagoModal(2950)'></i>";
+                row.estado = "FACTURADO";
+
+                // Mostrar Éxito en UI
+                document.getElementById('factura-loading').classList.add('hidden');
+                document.getElementById('factura-generada-num').innerText = serieFactura;
+                document.getElementById('factura-success').classList.remove('hidden');
+
+                // Refrescar Grilla
+                filtrarCobranza();
+            }, 2000);
+        }
+        function abrirActualizarLiquidacion() { 
+            closeDropdown();
+            const row = cobranzaData.find(d => d.id === selectedRowId);
+            // Resetear vistas
+            document.getElementById('update-confirm-view').classList.remove('hidden');
+            document.getElementById('update-success-view').classList.add('hidden');
+            
+            document.getElementById('num-liq-display').innerText = row.liquidacion;
+            document.getElementById('modal-actualizar-liquidacion').style.display = 'flex'; 
+        }
+        function procesarActualizacion() {
+            // Simular carga de procesamiento
+            const confirmView = document.getElementById('update-confirm-view');
+            const successView = document.getElementById('update-success-view');
+            //const newLiqDisplay = document.getElementById('new-liq-num');
+
+            confirmView.classList.add('opacity-50');
+            confirmView.style.pointerEvents = 'none';
+
+            setTimeout(() => {
+                const randomNum = Math.floor(Math.random() * 900) + 100;
+                //newLiqDisplay.innerText = `00${randomNum}-2026`;
+                
+                confirmView.classList.add('hidden');
+                confirmView.classList.remove('opacity-50');
+                confirmView.style.pointerEvents = 'auto';
+                
+                successView.classList.remove('hidden');
+
+                // Cierre automático tras 2.5 segundos
+                setTimeout(() => {
+                    cerrarModal('modal-actualizar-liquidacion');
+                }, 2500);
+            }, 800);
+        }
+
+
+         /* LOGICA DE REGISTRO DE PAGO */
+        function abrirRegistrarPago() {
+            closeDropdown();
+            const row = cobranzaData.find(d => d.id === selectedRowId);
+            document.getElementById('pago-empresa-name').innerText = row.empresa;
+            document.getElementById('pago-monto-total').innerText = row.total.toLocaleString('en-US', {minimumFractionDigits: 2});
+            document.getElementById('pago-monto-input').value = row.total.toFixed(2);
+            document.getElementById('modal-registrar-pago').style.display = 'flex';
+        }
+
+         function abrirEnviarLiquidacion() {
+            closeDropdown();
+            document.getElementById('send-form').classList.remove('hidden');
+            document.getElementById('send-success').classList.add('hidden');
+            document.getElementById('email-destinatario').value = "";
+            document.getElementById('modal-enviar-liquidacion').style.display = 'flex';
+        }
+        function simularDescargaExcel() {
+            closeDropdown();
+            const toast = document.getElementById('download-toast');
+            toast.style.display = 'flex';
+
+            const afiliados = [
+                ["DNI", "Apellidos y Nombres", "Parentesco", "Plan", "Estado"],
+                ["45889922", "Perez Garcia, Juan Alberto", "Titular", "EPS Plan 1", "Activo"],
+                ["70221155", "Perez Garcia, Maria Lucia", "Hijo", "EPS Plan 1", "Activo"],
+                ["10556633", "Ramos Soto, Carlos", "Titular", "EPS Pensión", "Activo"],
+                ["44228811", "Mendoza Ruiz, Elena", "Conyuge", "EPS Plan 2", "Activo"],
+                ["09887755", "Castro Villon, Roberto", "Titular", "EPS Plan 1", "Baja"]
+            ];
+
+            let csvContent = "data:text/csv;charset=utf-8," 
+                + afiliados.map(e => e.join(",")).join("\n");
+
+            const encodedUri = encodeURI(csvContent);
+            
+            setTimeout(() => {
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", "MODELO_LIQUIDACION-PLANES EPS_PLAN_BASE.csv");
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                toast.innerHTML = '<i class="fas fa-check-circle text-green-400"></i><span>¡Descarga completada!</span>';
+                
+                setTimeout(() => {
+                    toast.style.display = 'none';
+                    toast.innerHTML = '<i class="fas fa-file-excel text-green-400"></i><span>Generando excel EPS_PLAN_BASE...</span>';
+                }, 2000);
+            }, 1500);
+        }
+
+        function guardarPago() {
+            const row = cobranzaData.find(d => d.id === selectedRowId);
+            const forma = document.getElementById('pago-forma').value;
+            const banco = document.getElementById('pago-banco').value;
+            const monto = document.getElementById('pago-monto-input').value;
+
+            if(!monto || monto <= 0) {
+                alert("Por favor ingrese un monto válido.");
+                return;
+            }
+
+            // Actualizamos la data local
+            row.estado = "PAGADO";
+            row.formaPago = `<i class='far fa-file-alt text-lg text-gray-600' onclick='openFormaPagoModal(2950)'></i>`;//`${forma} (${banco})`;
+            
+            // Si no tiene factura, le generamos una simulada al registrar pago
+            /*
+            if(!row.factura) {
+                const correlativo = Math.floor(Math.random() * 90000) + 10000;
+                row.factura = `FE01-00${correlativo}`;
+            }*/
+
+            filtrarCobranza();
+            //cerrarModal('modal-registrar-pago');
+            
+            // Feedback visual
+            const feedback = document.createElement('div');
+            feedback.className = "fixed top-5 left-1/2 -translate-x-1/2 bg-emerald-600 text-white px-6 py-3 rounded shadow-2xl z-[11000] font-bold uppercase text-[10px] animate-bounce";
+            feedback.innerHTML = '<i class="fas fa-check-circle mr-2"></i> Pago Registrado Exitosamente';
+            document.body.appendChild(feedback);
+            setTimeout(() => feedback.remove(), 3000);
+        }
+
+        // ...existing code...
+
+        function renderCobranza(data) {
+            const tbody = document.getElementById('cobranza-body');
+            const nombresMeses = { "01": "ENE", "02": "FEB", "03": "MAR" };
+            function getStatusBadgeClass(estado) {
+                switch (estado) {
+                    case "PAGADO": return "bg-pagado";
+                    case "FACTURADO": return "bg-purple-200 text-blue-900";
+                    case "PENDIENTE": return "bg-pendiente";
+                    case "APROBADO": return "bg-aprobado";
+                    case "PAGADO_PARCIALMENTE": return "bg-pagado-parcialmente";
+                    default: return "bg-pendiente";
+                }
+            }
+            tbody.innerHTML = data.map((item, idx) => {
+                let statusBadge = getStatusBadgeClass(item.estado);
+                let estadoLabel = item.estado === "PAGADO_PARCIALMENTE" ? "PAGADO PARCIALMENTE" : item.estado;
+
+                // Extraer el número de factura real (sin HTML)
+                let facturaReal = '';
+                if (item.factura) {
+                    const match = item.factura.match(/>([^<]+)</);
+                    if (match) {
+                        facturaReal = match[1];
+                    } else {
+                        facturaReal = item.factura.replace(/<[^>]+>/g, '').trim();
+                    }
+                }
+
+                // Sumar notas de crédito y débito para cada fila (por factura real)
+                let notasCredito = 0, notasDebito = 0;
+                if (window.notasRegistradas && facturaReal) {
+                    window.notasRegistradas.forEach(n => {
+                        if (n.factura === facturaReal) {
+                            if (n.tipo === 'Crédito') {
+                                notasCredito += parseFloat(n.monto);
+                            } else if (n.tipo === 'Débito') {
+                                notasDebito += parseFloat(n.monto);
+                            }
+                        }
+                    });
+                }
+                // Ajustar el total mostrado
+                let totalAjustado = item.total;
+                if (notasCredito > 0) totalAjustado -= notasCredito;
+                if (notasDebito > 0) totalAjustado += notasDebito;
+
+                // Mostrar siempre las columnas de notas, aunque no haya factura
+                let colNotaCredito = '-';
+                let colNotaDebito = '-';
+                if (facturaReal) {
+                    colNotaCredito = notasCredito > 0 ? `<span>${notasCredito.toFixed(2)}</span> <i class='fas fa-eye text-blue-500 cursor-pointer' title='Ver detalle' onclick='mostrarDetalleNotas("credito", "${facturaReal}")'></i>` : '0.00';
+                    colNotaDebito = notasDebito > 0 ? `<span>${notasDebito.toFixed(2)}</span> <i class='fas fa-eye text-orange-500 cursor-pointer' title='Ver detalle' onclick='mostrarDetalleNotas("debito", "${facturaReal}")'></i>` : '0.00';
+                }
+
+                return `
+                <tr class="${idx % 2 !== 0 ? 'bg-gray-50' : 'bg-white'} border-b hover:bg-blue-50">
+                    <td class="p-2 border-r text-center">
+                        <button onclick="showDropdown(event, ${item.id})" class="btn-opciones mx-auto">
+                            <i class="fas fa-ellipsis-h"></i> <i class="fas fa-chevron-down text-[8px]"></i>
+                        </button>
+                    </td>
+                    <td class="p-2 border-r uppercase font-semibold text-gray-700 truncate max-w-[200px]">${item.empresa}</td>
+                    <td class="p-2 border-r text-gray-600">${item.contrato}</td>
+                    <td class="p-2 border-r font-medium">${item.producto}</td>
+                    <td class="p-2 border-r text-blue-600 font-bold">${item.liquidacion}</td>
+                    <td class="p-2 border-r text-center"><span class="badge ${statusBadge}">${estadoLabel}</span></td>
+                    <td class="p-2 border-r text-center text-[9px] font-bold text-gray-500 uppercase">
+                        ${["PAGADO", "PAGADO_PARCIALMENTE"].includes(item.estado) ? `<i class='far fa-file-alt text-lg text-gray-600' onclick='openFormaPagoModal(${item.total}, ${item.id})'></i>` : '-'}
+                    </td>
+                    <td class="p-2 border-r text-center font-bold text-gray-700 uppercase">${nombresMeses[item.mes] || item.mes} ${item.anio}</td>
+                    <td class="p-2 border-r font-bold text-blue-800">${item.factura || '-'}</td>
+                    <td class="p-2 border-r text-center font-bold text-gray-800" >${colNotaCredito}</td>
+                    <td class="p-2 border-r text-center font-bold text-gray-800">${colNotaDebito}</td>
+                    <td class="p-2 text-right font-bold text-gray-800">${totalAjustado.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                </tr>`;
+            }).join('');
+        }
+        // Modal para mostrar detalle de notas de crédito/débito por factura
+        function mostrarDetalleNotas(tipo, factura) {
+    let notas = (window.notasRegistradas || []).filter(n => n.factura === factura && n.tipo.toLowerCase() === (tipo === 'credito' ? 'crédito' : 'débito'));
+    let html = `<div class='overflow-x-auto'><table class='min-w-full text-left border-collapse border border-gray-300'><thead class='bg-gray-100 font-bold uppercase text-gray-600'><tr><th class='p-2 border border-gray-300'>N° Nota</th><th class='p-2 border border-gray-300'>Tipo</th><th class='p-2 border border-gray-300'>Factura Ref.</th><th class='p-2 border border-gray-300'>Motivo</th><th class='p-2 border border-gray-300'>Monto</th></tr></thead><tbody>`;
+    if (notas.length === 0) {
+        html += `<tr><td colspan='5' class='text-center text-gray-400'>No hay notas registradas</td></tr>`;
+    } else {
+        notas.forEach(n => {
+            html += `<tr><td class='p-2 border border-gray-300'>${n.numero}</td><td class='p-2 border border-gray-300'>${n.tipo}</td><td class='p-2 border border-gray-300'>${n.factura}</td><td class='p-2 border border-gray-300'>${n.motivo}</td><td class='p-2 border border-gray-300 text-right'>${n.monto}</td></tr>`;
+        });
+    }
+    html += `</tbody></table></div>`;
+    document.getElementById('titulo-detalle-notas').innerText = `Detalle Notas de ${(tipo === 'credito' ? 'Crédito' : 'Débito')} para Factura ${factura}`;
+    document.getElementById('contenido-detalle-notas').innerHTML = html;
+    document.getElementById('modal-detalle-notas').style.display = 'flex';
+        }
+
+        function filtrarCobranza() {
+            const anio = document.getElementById('f-anio').value;
+            const mes = document.getElementById('f-mes').value;
+            const estado = document.getElementById('f-estado').value;
+            const empresa = document.getElementById('f-empresa').value.trim().toUpperCase();
+            const producto = document.getElementById('f-producto').value;
+            const contrato = document.getElementById('f-contrato').value.trim().toUpperCase();
+
+            const filtrados = cobranzaData.filter(item => {
+                const matchAnio = item.anio === anio;
+                const matchMes = item.mes === mes;
+                // Permitir filtrar también por FACTURADO
+                const matchEstado = estado === 'TODOS' || item.estado === estado;
+                const matchEmpresa = !empresa || item.empresa.toUpperCase().includes(empresa);
+                const matchProducto = producto === 'TODOS' || item.producto === producto;
+                const matchContrato = !contrato || (item.contrato && item.contrato.toUpperCase().includes(contrato));
+                return matchAnio && matchMes && matchEstado && matchEmpresa && matchProducto && matchContrato;
+            });
+            renderCobranza(filtrados);
+        }
+
+        window.onclick = (e) => { if(!e.target.closest('#floating-dropdown') && !e.target.closest('.btn-opciones')) closeDropdown(); };
+        window.onload = filtrarCobranza;
+    </script>
+
+
+
+
+</body>
+</html>
