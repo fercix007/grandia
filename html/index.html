@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Grandia - Estado de Cuenta</title>
+	<script src="https://cdn.tailwindcss.com"></script>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+	<link rel="stylesheet" href="../css/estilos.css">
+	<script src="../js/main.js" defer></script>
+</head>
+<body class="flex">
+	<!-- Sidebar -->
+	<div class="sidebar text-white shrink-0">
+		<div class="p-4 bg-white flex justify-between items-center">
+			SABSA
+			<i class="fas fa-chevron-left text-gray-400 cursor-pointer"></i>
+		</div>
+		<div class="p-4 flex items-center gap-3 border-b border-gray-700">
+			<div class="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center overflow-hidden">
+				<i class="fas fa-user text-2xl"></i>
+			</div>
+			<div>
+				<p class="text-xs font-bold">Ejecutivo</p>
+				<p class="text-[10px] text-gray-400 uppercase">Ejecutivo</p>
+			</div>
+			<i class="fas fa-cog ml-auto text-gray-400 text-xs"></i>
+		</div>
+		<nav class="mt-4">
+			<div class="px-4 py-3 flex items-center gap-3 hover:bg-gray-800 cursor-pointer">
+				<i class="fas fa-home text-sm"></i>
+				<span class="text-xs uppercase">Inicio</span>
+			</div>
+			<div class="px-4 py-3 flex items-center gap-3 bg-blue-600 cursor-pointer border-r-4 border-cyan-400">
+				<i class="fas fa-th-large text-sm"></i>
+				<span class="text-xs uppercase">Estado de Cuenta</span>
+				<i class="fas fa-chevron-right ml-auto text-[10px]"></i>
+			</div>
+			<div class="px-4 py-3 flex items-center gap-3 hover:bg-gray-800 cursor-pointer" id="cobranza-link">
+				<i class="fas fa-money-bill-wave text-sm"></i>
+				<span class="text-xs uppercase">Cobranza</span>
+				<i class="fas fa-chevron-right ml-auto text-[10px]"></i>
+			</div>
+		</nav>
+	</div>
+	<!-- Main Content -->
+	<div class="main-content">
+		<!-- Aquí va el contenido migrado de index.html -->
+	</div>
+	<script>
+		// Delegar navegación a main.js si es necesario
+		document.getElementById('cobranza-link').onclick = function() {
+			window.location.href = 'cobranza.html';
+		};
+	</script>
+</body>
+</html>

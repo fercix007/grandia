@@ -350,18 +350,12 @@
                         <button id="tab-cuotas" onclick="selectTab('cuotas')" class="px-4 py-2 font-bold text-gray-500 border-b-2 border-transparent bg-white focus:outline-none">CUOTAS</button>
                     </div>
                     <div id="tab-content-afiliados" class="pt-4">
+                        <input type="search" id="modal-search-input" oninput="filterModalAfiliados()" placeholder="NOMBRE AFILIADO/DNI/CODIGO TITULAR" class="border border-gray-400 pl-6 pr-2 py-1 text-[10px] uppercase w-64 outline-none">
                         <!-- Aquí va el contenido de Afiliados -->
                          <div class="fieldset-custom">
                     <span class="fieldset-legend">COMPOSICIÓN</span>
                     <div class="flex justify-between items-center mb-3">
                         <div class="flex gap-2 items-center">
-                            
-                            <div class="relative">
-                                <!--<i class="fas fa-search absolute left-2 top-1.5 text-gray-400 text-[10px]"></i>-->
-                                <input type="search" id="modal-search-input" oninput="filterModalAfiliados()" placeholder="NOMBRE AFILIADO/DNI/CODIGO TITULAR" class="border border-gray-400 pl-6 pr-2 py-1 text-[10px] uppercase w-64 outline-none">
-                            </div>
-                            <br>
-                            
                         </div>
                         <div class="flex gap-2">
                             <button class="bg-green-600 text-white px-3 py-1 rounded text-[10px] font-bold uppercase flex items-center gap-1"><i class="fas fa-file-excel"></i> Excel</button>
@@ -890,46 +884,59 @@
         }
 
         // --- Modal Logic ---
-        function openContractModal(num,ver,afil,cod_titular) {
-            document.getElementById('modal-cuota-info').innerHTML =``;
+        function openContractModal(num, ver, afil, cod_titular) {
             const contract = contratosData.find(c => c.contrato === num) || contratosData[0];
-            // Mostrar u ocultar el grupo familiar según 'ver'
-            const grupoFamiliar = document.getElementById('eecc-grupo-familiar');
-           
-            if (ver === 'on') {
-                grupoFamiliar.style.display = 'flex';
-                
-            } else {
-                grupoFamiliar.style.display = 'none';
-                
+
+            // Limpiar el div adicional previo del DOM
+            const _tablaViejaContract = document.getElementById('modal-adicional-table');
+            if (_tablaViejaContract && _tablaViejaContract.parentElement) {
+                _tablaViejaContract.parentElement.removeChild(_tablaViejaContract);
             }
-            // Si cod_titular existe, no está vacío y es numérico, filtrar por ese código
+
+            // Título y banner
+            document.getElementById('modal-title').innerText = `NUMERO CONTRATO : ${contract.contrato}`;
+            document.getElementById('modal-header-banner').innerHTML = `
+                <span>EMPRESA: ${contract.empresa}</span>
+                <span>CONTRATO: ${contract.contrato}</span>
+                <span>PRODUCTO: ${contract.producto}</span>
+                <span>VIGENCIA: ${contract.vigencia}</span>
+            `;
+
+            // Info titular
+            if (ver === 'on') {
+                document.getElementById('modal-cuota-info').innerHTML = `<span class="text-black font-bold uppercase">TITULAR: ${afil}</span>`;
+                document.getElementById('eecc-grupo-familiar').style.display = 'flex';
+                document.getElementById('modal-search-input').style.display = 'none';
+            } else {
+                document.getElementById('modal-cuota-info').innerHTML = '';
+                document.getElementById('eecc-grupo-familiar').style.display = 'none';
+                document.getElementById('modal-search-input').style.display = 'block';
+            }
+            //document.getElementById('modal-search-input').value = '';
+
+            // Mostrar el fieldset de afiliados (composición)
+            const fieldsets = document.querySelectorAll('#tab-content-afiliados .fieldset-custom');
+            const fieldsetAfiliados = fieldsets[0];
+            if (fieldsetAfiliados) fieldsetAfiliados.style.display = '';
+
+            // Si hay cod_titular válido, filtrar afiliados y adicionales por ese código
             if (cod_titular && cod_titular.trim() !== '' && !isNaN(Number(cod_titular))) {
-                // Filtrar afiliados por codTit
                 const afiliadosFiltrados = afiliadosData.filter(a => a.contra === contract.contrato && a.codTit === cod_titular);
                 lastAfiliadosContrato = afiliadosFiltrados;
-                openAfiliadosModal({ nro: 1, emision: '01/03/2026', vcto: '30/03/2026', estado: 'PENDIENTE',mostrar: ver,afil_nom:afil }, contract);
                 renderModalTable(afiliadosFiltrados);
 
-                // Mostrar tabla de adicionales con el mismo codTit debajo de la tabla de afiliados
-                let tablaAdicional = document.getElementById('modal-adicional-table');
-                if (!tablaAdicional) {
-                    tablaAdicional = document.createElement('div');
+                // Crear y mostrar tabla de adicionales
+                const adicionalesFiltrados = adicionalData.filter(a => a.contra === contract.contrato && a.codTit === cod_titular);
+                if (adicionalesFiltrados.length > 0) {
+                    let tablaAdicional = document.createElement('div');
                     tablaAdicional.id = 'modal-adicional-table';
                     tablaAdicional.style.marginTop = '20px';
-                    // Insertar después del fieldset de afiliados
-                    const fieldsets = document.querySelectorAll('#tab-content-afiliados .fieldset-custom');
                     if (fieldsets.length > 0) {
                         fieldsets[0].parentElement.insertBefore(tablaAdicional, fieldsets[0].nextSibling);
                     } else {
                         document.getElementById('tab-content-afiliados').appendChild(tablaAdicional);
                     }
-                }
-                // Filtrar adicionales por codTit
-                const adicionalesFiltrados = adicionalData.filter(a => a.contra === contract.contrato && a.codTit === cod_titular);
-                if (adicionalesFiltrados.length > 0) {
                     const totalAdicional = adicionalesFiltrados.reduce((sum, curr) => sum + (curr.prima || 0), 0);
-                    tablaAdicional.style.display = '';
                     tablaAdicional.innerHTML = `
                         <div class="fieldset-custom">
                             <span class="fieldset-legend">ADICIONALES (CÓDIGO FAMILIAR: ${cod_titular})</span>
@@ -980,134 +987,107 @@
                             </div>
                         </div>
                     `;
-                } else {
-                    tablaAdicional.innerHTML = '';
-                    tablaAdicional.style.display = 'none';
                 }
             } else {
-                openAfiliadosModal({ nro: 1, emision: '01/03/2026', vcto: '30/03/2026', estado: 'PENDIENTE',mostrar: ver,afil_nom:afil }, contract);
+                // Sin filtro por cod_titular: mostrar todos los afiliados del contrato
+                const todosAfiliados = afiliadosData.filter(a => a.contra === contract.contrato);
+                lastAfiliadosContrato = todosAfiliados;
+                renderModalTable(todosAfiliados);
                 filterModalAfiliados();
             }
+
+            document.getElementById('modal-afiliados').style.display = 'flex';
         }
 
         
         // Variable global para restaurar la lista de afiliados filtrada por cuota
         let lastAfiliadosContrato = [];
+        // Variable para el modal de cuota (openAfiliadosModal)
+        let lastCuotaAfiliados = [];
 
         function openAfiliadosModal(cuotaInfo, contractOverride = null) {
-            
             const contract = contractOverride || currentContract;
-            document.getElementById('modal-title').innerText = `NUMERO CONTRATO : ${contract.contrato}`;
-            document.getElementById('modal-header-banner').innerHTML = `
+
+            // Título y banner en el nuevo modal
+            document.getElementById('mc-title').innerText = `NUMERO CONTRATO : ${contract.contrato}`;
+            document.getElementById('mc-banner').innerHTML = `
                 <span>EMPRESA: ${contract.empresa}</span>
                 <span>CONTRATO: ${contract.contrato}</span>
                 <span>PRODUCTO: ${contract.producto}</span>
                 <span>VIGENCIA: ${contract.vigencia}</span>
             `;
-            if(cuotaInfo.mostrar !== 'on') {
-                document.getElementById('modal-cuota-info').innerHTML = `
-                    <span>CUOTA: ${cuotaInfo.nro || 'S/N'}</span>
-                    <span>FECHA DE EMISION: ${cuotaInfo.emision}</span>
-                    <span>FECHA DE VENCIMIENTO: ${cuotaInfo.vcto}</span>
-                    <span>ESTADO: <span class="${cuotaInfo.estado === 'PAGADO' ? 'text-green-600' : 'text-red-600'}">${cuotaInfo.estado}</span></span>
-                `;
-                document.getElementById('eecc-grupo-familiar').style.display = 'none';
-                document.getElementById('modal-search-input').style.display = 'block';
-            }else{
-                document.getElementById('modal-cuota-info').innerHTML = `<span class="text-black font-bold uppercase">TITULAR:${cuotaInfo.afil_nom}</span>`;
-                document.getElementById('eecc-grupo-familiar').style.display = 'block';
-                document.getElementById('modal-search-input').style.display = 'none';
-            }
-            document.getElementById('modal-search-input').value = '';
-            // Buscar el plan de la cuota seleccionada en cuotasData
+            // Info de la cuota
+            document.getElementById('mc-cuota-info').innerHTML = `
+                <span>CUOTA: ${cuotaInfo.nro || 'S/N'}</span>
+                <span>FECHA DE EMISION: ${cuotaInfo.emision}</span>
+                <span>FECHA DE VENCIMIENTO: ${cuotaInfo.vcto}</span>
+                <span>ESTADO: <span class="${cuotaInfo.estado === 'PAGADO' ? 'text-green-600' : 'text-red-600'}">${cuotaInfo.estado}</span></span>
+            `;
+
+            // Limpiar contenedores
+            document.getElementById('mc-table-body').innerHTML = '';
+            document.getElementById('mc-adicional-table').innerHTML = '';
+            document.getElementById('mc-total-value').innerText = '0.00';
+            const mcFieldset = document.getElementById('mc-fieldset-afiliados');
+
+            // Determinar el plan de la cuota
             let planCuota = '';
-            if (cuotaInfo) {
-                let cuotaSeleccionada = null;
-                // Si hay liquidacion, usarla como criterio principal
-                if (cuotaInfo.liquidacion) {
-                    cuotaSeleccionada = cuotasData.find(c => c.liquidacion === cuotaInfo.liquidacion);
-                }
-                // Si no hay liquidacion o no se encontró, usar nro y cuota como antes
-                if (!cuotaSeleccionada && typeof cuotaInfo.nro !== 'undefined' && cuotaInfo.cuota) {
-                    cuotaSeleccionada = cuotasData.find(c => String(c.nro) === String(cuotaInfo.nro) && c.cuota === cuotaInfo.cuota);
-                }
-                if (cuotaSeleccionada && cuotaSeleccionada.plan) {
-                    planCuota = cuotaSeleccionada.plan;
-                }
+            if (cuotaInfo.liquidacion) {
+                const cSel = cuotasData.find(c => c.liquidacion === cuotaInfo.liquidacion);
+                if (cSel) planCuota = cSel.plan || '';
+            }
+            if (!planCuota && typeof cuotaInfo.nro !== 'undefined' && cuotaInfo.cuota) {
+                const cSel = cuotasData.find(c => String(c.nro) === String(cuotaInfo.nro) && c.cuota === cuotaInfo.cuota);
+                if (cSel) planCuota = cSel.plan || '';
             }
 
-            // Mostrar solo la tabla correspondiente según el plan
-            let tablaAdicional = document.getElementById('modal-adicional-table');
-            if (!tablaAdicional) {
-                tablaAdicional = document.createElement('div');
-                tablaAdicional.id = 'modal-adicional-table';
-                tablaAdicional.style.marginTop = '20px';
-                // Insertar después del fieldset de afiliados
-                const fieldsets = document.querySelectorAll('#tab-content-afiliados .fieldset-custom');
-                if (fieldsets.length > 0) {
-                    fieldsets[0].parentElement.insertBefore(tablaAdicional, fieldsets[0].nextSibling);
-                } else {
-                    document.getElementById('tab-content-afiliados').appendChild(tablaAdicional);
-                }
-            }
-
-            // Limpiar ambas tablas antes de mostrar la que corresponde
-            document.getElementById('modal-table-body').innerHTML = '';
-            tablaAdicional.innerHTML = '';
-
-            // Mostrar/ocultar la cabecera y tabla de afiliados según el plan
-            const fieldsets = document.querySelectorAll('#tab-content-afiliados .fieldset-custom');
-            const fieldsetAfiliados = fieldsets[0]; // Primer fieldset es composición (afiliados)
             if (planCuota === 'PLAN BASE') {
-                // Mostrar solo afiliados
-                if (fieldsetAfiliados) fieldsetAfiliados.style.display = '';
-                if (tablaAdicional) tablaAdicional.style.display = 'none';
+                // Mostrar tabla de afiliados
+                if (mcFieldset) mcFieldset.style.display = '';
+                document.getElementById('mc-adicional-table').style.display = 'none';
                 let afiliadosContrato = afiliadosData.filter(a => {
-                    // Filtrar ANA LUCIA LA TORRE SANDOVAL solo para cuotas >= 2 (Abril 2026 en adelante)
                     if (a.dni === '99754045' && a.afiliado === 'ANA LUCIA LA TORRE SANDOVAL') {
-                        // Determinar el nro de cuota seleccionada
                         let nroCuota = 0;
-                        if (cuotaInfo) {
-                            if (cuotaInfo.liquidacion) {
-                                const cSel = cuotasData.find(c => c.liquidacion === cuotaInfo.liquidacion);
-                                if (cSel) nroCuota = Number(cSel.nro);
-                            } else if (typeof cuotaInfo.nro !== 'undefined') {
-                                nroCuota = Number(cuotaInfo.nro);
-                            }
+                        if (cuotaInfo.liquidacion) {
+                            const cSel = cuotasData.find(c => c.liquidacion === cuotaInfo.liquidacion);
+                            if (cSel) nroCuota = Number(cSel.nro);
+                        } else if (typeof cuotaInfo.nro !== 'undefined') {
+                            nroCuota = Number(cuotaInfo.nro);
                         }
                         return nroCuota >= 2 && a.contra === contract.contrato && a.plan === planCuota;
                     }
                     return a.contra === contract.contrato && a.plan === planCuota && a.dni !== '99754045';
                 });
-                lastAfiliadosContrato = afiliadosContrato;
-                renderModalTable(afiliadosContrato);
-            } else if (planCuota && (planCuota === 'ADICIONAL 1' || planCuota === 'ADICIONAL 2')) {
-                // Ocultar la tabla de afiliados
-                if (fieldsetAfiliados) fieldsetAfiliados.style.display = 'none';
-                // Mostrar solo adicionales
-                if (tablaAdicional) tablaAdicional.style.display = '';
-                let adicionalesContrato = adicionalData.filter(a => a.contra === contract.contrato && a.plan === planCuota);
+                lastCuotaAfiliados = afiliadosContrato;
+                document.getElementById('mc-search-input').value = '';
+                renderCuotaModalTable(afiliadosContrato);
+            } else if (planCuota === 'ADICIONAL 1' || planCuota === 'ADICIONAL 2') {
+                // Ocultar tabla de afiliados, mostrar adicionales
+                if (mcFieldset) mcFieldset.style.display = 'none';
+                const mcAdicional = document.getElementById('mc-adicional-table');
+                mcAdicional.style.display = '';
+                const adicionalesContrato = adicionalData.filter(a => a.contra === contract.contrato && a.plan === planCuota);
                 if (adicionalesContrato.length > 0) {
                     const totalAdicional = adicionalesContrato.reduce((sum, curr) => sum + (curr.prima || 0), 0);
-                    tablaAdicional.innerHTML = `
+                    mcAdicional.innerHTML = `
                         <div class="fieldset-custom">
                             <span class="fieldset-legend">ADICIONALES</span>
                             <div class="overflow-x-auto border border-gray-300">
                                 <table class="w-full text-[10px] text-left border-collapse">
                                     <thead>
-                                        <tr class="bg-gray-100 font-bold uppercase text-gray-600">
-                                            <th class="p-1.5 border-r border-gray-300">Cod. Titular</th>
-                                            <th class="p-1.5 border-r border-gray-300">Titular</th>
-                                            <th class="p-1.5 border-r border-gray-300">Cod. Afiliado</th>
-                                            <th class="p-1.5 border-r border-gray-300">Grupo Edad</th>
-                                            <th class="p-1.5 border-r border-gray-300">Plan</th>
-                                            <th class="p-1.5 border-r border-gray-300">DNI</th>
-                                            <th class="p-1.5 border-r border-gray-300">Afiliado</th>
-                                            <th class="p-1.5 border-r border-gray-300">Parentesco</th>
-                                            <th class="p-1.5 border-r border-gray-300 text-center">Edad</th>
-                                            <th class="p-1.5 border-r border-gray-300">F. Afiliación</th>
-                                            <th class="p-1.5 border-r border-gray-300 text-right">Prima</th>
-                                            <th class="p-1.5 text-center">Estado</th>
+                                        <tr class="grid-header-gray">
+                                            <th class="p-1.5 border-r border-gray-400">CODIGO TITULAR</th>
+                                            <th class="p-1.5 border-r border-gray-400">TITULAR</th>
+                                            <th class="p-1.5 border-r border-gray-400">CODIGO AFILIADO</th>
+                                            <th class="p-1.5 border-r border-gray-400">GRUPO EDAD</th>
+                                            <th class="p-1.5 border-r border-gray-400">PLAN</th>
+                                            <th class="p-1.5 border-r border-gray-400">DNI</th>
+                                            <th class="p-1.5 border-r border-gray-400">AFILIADO</th>
+                                            <th class="p-1.5 border-r border-gray-400">PARENTESCO</th>
+                                            <th class="p-1.5 border-r border-gray-400 text-center">EDAD</th>
+                                            <th class="p-1.5 border-r border-gray-400">FECHA DE AFILIACION</th>
+                                            <th class="p-1.5 border-r border-gray-400 text-right">PRIMA</th>
+                                            <th class="p-1.5 text-center">ESTADO</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -1141,16 +1121,43 @@
                     `;
                 }
             } else {
-                // Si no es ninguno de los casos, mostrar la tabla de afiliados por defecto
-                if (fieldsetAfiliados) fieldsetAfiliados.style.display = '';
-                if (tablaAdicional) tablaAdicional.style.display = 'none';
+                // Sin plan definido: mostrar tabla de afiliados por defecto
+                if (mcFieldset) mcFieldset.style.display = '';
+                document.getElementById('mc-adicional-table').style.display = 'none';
+                const todosAfiliados = afiliadosData.filter(a => a.contra === contract.contrato);
+                lastCuotaAfiliados = todosAfiliados;
+                document.getElementById('mc-search-input').value = '';
+                renderCuotaModalTable(todosAfiliados);
             }
 
-            document.getElementById('modal-afiliados').style.display = 'flex';
+            document.getElementById('modal-cuota-afiliados').style.display = 'flex';
         }
 
+        function renderCuotaModalTable(data) {
+            const tbody = document.getElementById('mc-table-body');
+            tbody.innerHTML = data.map((row, idx) => `
+                <tr class="border-b border-gray-300 ${idx % 2 !== 0 ? 'bg-gray-50' : 'bg-white'}">
+                    <td class="p-1.5 border-r border-gray-300">${row.codTit}</td>
+                    <td class="p-1.5 border-r border-gray-300 uppercase">${row.titular}</td>
+                    <td class="p-1.5 border-r border-gray-300">${row.codAf}</td>
+                    <td class="p-1.5 border-r border-gray-300 text-center">${row.gEdad}</td>
+                    <td class="p-1.5 border-r border-gray-300 uppercase">${row.plan}</td>
+                    <td class="p-1.5 border-r border-gray-300">${row.dni}</td>
+                    <td class="p-1.5 border-r border-gray-300 uppercase">${row.afiliado}</td>
+                    <td class="p-1.5 border-r border-gray-300 uppercase">${row.parentesco}</td>
+                    <td class="p-1.5 border-r border-gray-300 text-center">${row.edad}</td>
+                    <td class="p-1.5 border-r border-gray-300">${row.fAf}</td>
+                    <td class="p-1.5 border-r border-gray-300 text-right font-bold">${row.prima.toFixed(2)}</td>
+                    <td class="p-1.5 text-center font-bold text-green-600 uppercase">${row.est}</td>
+                </tr>
+            `).join('');
+            const total = data.reduce((sum, curr) => sum + curr.prima, 0);
+            document.getElementById('mc-total-value').innerText = total.toLocaleString('en-US', { minimumFractionDigits: 2 });
+        }
 
-
+        function closeCuotaModal() {
+            document.getElementById('modal-cuota-afiliados').style.display = 'none';
+        }
 
 
 
@@ -1179,6 +1186,26 @@
 
             const total = data.reduce((sum, curr) => sum + curr.prima, 0);
             document.getElementById('modal-total-value').innerText = total.toLocaleString('en-US', { minimumFractionDigits: 2 });
+        }
+
+        function filterCuotaAfiliados() {
+            const query = document.getElementById('mc-search-input').value.trim().toLowerCase();
+            if (!query) {
+                renderCuotaModalTable(lastCuotaAfiliados);
+                return;
+            }
+            const encontrado = lastCuotaAfiliados.find(a =>
+                (a.afiliado && a.afiliado.toLowerCase().includes(query)) ||
+                (a.dni && a.dni.toLowerCase().includes(query)) ||
+                (a.titular && a.titular.toLowerCase().includes(query)) ||
+                (a.codTit && a.codTit.toLowerCase().includes(query))
+            );
+            if (encontrado) {
+                const familiares = lastCuotaAfiliados.filter(a => a.codTit === encontrado.codTit);
+                renderCuotaModalTable(familiares);
+            } else {
+                renderCuotaModalTable([]);
+            }
         }
 
         function filterModalAfiliados() {
@@ -1240,6 +1267,8 @@
         window.onclick = function(event) {
             const modal = document.getElementById('modal-afiliados');
             if (event.target == modal) closeModal();
+            const modalCuota = document.getElementById('modal-cuota-afiliados');
+            if (event.target == modalCuota) closeCuotaModal();
             if (!event.target.closest('.autocomplete-wrapper')) {
                 document.getElementById('autocomplete-list').classList.add('hidden');
             }
@@ -1280,11 +1309,11 @@
                 // Selección de imagen según número de factura
                 let imgSrc = '';
                 if (facturaNum === '00002525' || facturaNum === 'FF001-00002525') {
-                    imgSrc = 'factura.jpg';
+                    imgSrc = 'img/factura.jpg';
                 } else if (facturaNum === '00002526' || facturaNum === 'FF001-00002526') {
                     imgSrc = 'factura2.jpg';
                 } else {
-                    imgSrc = 'factura.JPG'; // Imagen por defecto
+                    imgSrc = 'img/factura.jpg'; // Imagen por defecto
                 }
 
                 // Renderizar la imagen en el modal
@@ -1304,6 +1333,118 @@
          
     </script>
 
+    <!-- Modal: Afiliados por Cuota (openAfiliadosModal) -->
+    <div id="modal-cuota-afiliados" class="modal-overlay" style="display:none;">
+        <div class="modal-container">
+            <div class="modal-header">
+                <span id="mc-title" class="uppercase">AFILIADOS POR CUOTA</span>
+                <button onclick="closeCuotaModal()" class="text-white hover:text-gray-200 text-xl font-bold">&times;</button>
+            </div>
+            <div class="p-4">
+                <div class="text-[10px] font-bold text-gray-700 mb-4 bg-blue-50 p-2 flex justify-between uppercase border-b border-blue-200">
+                    <div id="mc-banner" class="flex gap-6"></div>
+                </div>
+                <div id="mc-cuota-info" class="text-[10px] font-bold flex gap-10 mb-3 px-2"></div>
+                <div class="flex justify-between items-center mb-3">
+                        <div class="flex gap-2 items-center">
+                            
+                            <div class="relative">
+                                <!--<i class="fas fa-search absolute left-2 top-1.5 text-gray-400 text-[10px]"></i>-->
+                                <input type="search" id="mc-search-input" oninput="filterCuotaAfiliados()" placeholder="NOMBRE AFILIADO/DNI/CODIGO TITULAR" class="border border-gray-400 pl-6 pr-2 py-1 text-[10px] uppercase w-64 outline-none">
+                            </div>
+                            <br>
+                            
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="bg-green-600 text-white px-3 py-1 rounded text-[10px] font-bold uppercase flex items-center gap-1"><i class="fas fa-file-excel"></i> Excel</button>
+                            <button class="bg-red-700 text-white px-3 py-1 rounded text-[10px] font-bold uppercase flex items-center gap-1"><i class="fas fa-file-pdf"></i> PDF</button>
+                            <button class="bg-orange-500 text-white px-3 py-1 rounded text-[10px] font-bold uppercase flex items-center gap-1"><i class="fas fa-print"></i> Imprimir</button>
+                        </div>
+                    </div>
+                <div id="mc-fieldset-afiliados" class="fieldset-custom">
+                    <span class="fieldset-legend">COMPOSICIÓN</span>
+                    <div class="overflow-x-auto border border-gray-300">
+                        <table class="w-full text-[10px] text-left border-collapse">
+                            <thead>
+                                <tr class="grid-header-gray">
+                                    <th class="p-1.5 border-r border-gray-400">CODIGO TITULAR</th>
+                                    <th class="p-1.5 border-r border-gray-400">TITULAR</th>
+                                    <th class="p-1.5 border-r border-gray-400">CODIGO AFILIADO</th>
+                                    <th class="p-1.5 border-r border-gray-400">GRUPO EDAD</th>
+                                    <th class="p-1.5 border-r border-gray-400">PLAN</th>
+                                    <th class="p-1.5 border-r border-gray-400">DNI</th>
+                                    <th class="p-1.5 border-r border-gray-400">AFILIADO</th>
+                                    <th class="p-1.5 border-r border-gray-400">PARENTESCO</th>
+                                    <th class="p-1.5 border-r border-gray-400 text-center">EDAD</th>
+                                    <th class="p-1.5 border-r border-gray-400">FECHA DE AFILIACION</th>
+                                    <th class="p-1.5 border-r border-gray-400 text-right">PRIMA</th>
+                                    <th class="p-1.5 text-center">ESTADO</th>
+                                </tr>
+                            </thead>
+                            <tbody id="mc-table-body"></tbody>
+                            <tfoot class="bg-gray-50 font-bold border-t-2 border-gray-300">
+                                <tr>
+                                    <td colspan="10" class="p-1.5 text-right uppercase">TOTAL:</td>
+                                    <td class="p-1.5 text-right font-bold" id="mc-total-value">0.00</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+                <div id="mc-adicional-table"></div>
+                <div class="fieldset-custom">
+                    <span class="fieldset-legend">MOVIMIENTOS</span>
+                    <div class="flex gap-2 mb-2">
+                        <button class="bg-green-600 text-white px-3 py-1 rounded text-[10px] font-bold uppercase flex items-center gap-1"><i class="fas fa-file-excel"></i> Excel</button>
+                        <button class="bg-red-700 text-white px-3 py-1 rounded text-[10px] font-bold uppercase flex items-center gap-1"><i class="fas fa-file-pdf"></i> PDF</button>
+                        <button class="bg-orange-500 text-white px-3 py-1 rounded text-[10px] font-bold uppercase flex items-center gap-1"><i class="fas fa-print"></i> Imprimir</button>
+                    </div>
+                    <div class="overflow-x-auto border border-gray-300">
+                        <table class="w-full text-[10px] text-left border-collapse">
+                            <thead>
+                                <tr class="grid-header-gray">
+                                    <th class="p-1.5 border-r border-gray-400" colspan="3">DETALLE</th>
+                                    <th class="p-1.5 border-r border-gray-400" rowspan="2">INI.VIGENCIA</th>
+                                    <th class="p-1.5 border-r border-gray-400" rowspan="2">PLAN</th>
+                                    <th class="p-1.5 border-r border-gray-400" rowspan="2">FECHA</th>
+                                    <th class="p-1.5 border-r border-gray-400" rowspan="2">PARENTESCO</th>
+                                    <th class="p-1.5 border-r border-gray-400" colspan="3">AFILIADO</th>
+                                </tr>
+                                <tr class="grid-header-gray">
+                                    <th class="p-1.5 border-r border-gray-400">CODIGO</th>
+                                    <th class="p-1.5 border-r border-gray-400">TIPO</th>
+                                    <th class="p-1.5 border-r border-gray-400">MOTIVO</th>
+                                    <th class="p-1.5 border-r border-gray-400">CODIGO AFILIADO</th>
+                                    <th class="p-1.5 border-r border-gray-400">APELLIDOS Y NOMBRE</th>
+                                    <th class="p-1.5">FECHA DEL REGISTRO</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b border-gray-300 bg-white">
+                                    <td class="p-1.5 border-r border-gray-300">6201015900</td>
+                                    <td class="p-1.5 border-r border-gray-300 uppercase">BAJA</td>
+                                    <td class="p-1.5 border-r border-gray-300 uppercase">SOLICITUD VOLUNTARIA</td>
+                                    <td class="p-1.5 border-r border-gray-300"></td>
+                                    <td class="p-1.5 border-r border-gray-300 uppercase">PLAN BASE</td>
+                                    <td class="p-1.5 border-r border-gray-300">28/02/2026</td>
+                                    <td class="p-1.5 border-r border-gray-300 uppercase">PADRE</td>
+                                    <td class="p-1.5 border-r border-gray-300"></td>
+                                    <td class="p-1.5 border-r border-gray-300 uppercase">JOSE CARPIO PEREZ</td>
+                                    <td class="p-1.5">01/01/2026</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex justify-center">
+                    <button onclick="closeCuotaModal()" class="bg-red-700 text-white font-bold uppercase px-24 py-2 rounded-sm text-xs shadow-md hover:bg-red-800">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Liquidación -->
     <div id="modal-liquidacion" class="modal-overlay">
         <div class="modal-container" style="max-width:850px;width:100%;">
@@ -1314,7 +1455,7 @@
             
             <div class="p-4">
                 <!-- Banner Info -->
-                 <img src="detalle_lq.JPG" alt="Imagen Liquidación">
+                 <img src="img/detalle_lq.jpg" alt="Imagen Liquidación">
 
                 <div class="mt-6 flex justify-center">
                     <button onclick="closeLiquidacionModal()" class="bg-red-700 text-white font-bold uppercase px-24 py-2 rounded-sm text-xs shadow-md hover:bg-red-800">Cerrar</button>
